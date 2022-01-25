@@ -70,7 +70,6 @@ export const Detail = () => {
 	}
 	useEffect(() => {
 		fetchData().then((qst) => {
-			console.log("==================")
 			setData({ ...data, question: qst || undefined });
 		}).catch((reason) => {
 			setData({ ...data, alert: { type: "error", message: reason.toString() } });
