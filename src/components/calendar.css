@@ -1,0 +1,46 @@
+.month-header {
+  font-size: 24px;
+}
+
+table {
+  margin: auto;
+  padding-top: 5px;
+  padding-bottom: 20px;
+}
+
+td {
+  width: 100px;
+}
+
+.day {
+  cursor: pointer;
+}
+
+.day:hover {
+  outline: 1px solid #9999ff;
+}
+
+.Saturday,
+.Sunday {
+  color: red;
+}
+
+.picked {
+  outline: 1px solid blue !important;
+}
+
+.scope-select {
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+  width: 100px;
+  height: 20px;
+}
+
+.submit-button {
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+.past {
+  color: #cccccc;
+}
