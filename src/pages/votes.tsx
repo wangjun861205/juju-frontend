@@ -135,7 +135,7 @@ export const Detail = () => {
 	}>({ vote: null, alert: null })
 	const fetchData = async () => {
 		try {
-			const res = await fetch(`/organizations/${organization_id}/votes/${vote_id}`);
+			const res = await fetch(`/votes/${vote_id}`);
 			if (res.status !== 200) {
 				setData({ ...data, alert: { type: "error", message: res.statusText } });
 			}
@@ -163,6 +163,17 @@ export const Detail = () => {
 		{
 			title: "HasAnswered",
 			dataIndex: "has_answered"
+		},
+		{
+			title: "Actions",
+			dataIndex: "",
+			key: "",
+			render: (record: { id: number }) => {
+				return <Button onClick={(event) => {
+					event.stopPropagation();
+					nav(`/questions/${record.id}/update`);
+				}}>Update</Button>
+			}
 		}
 	]
 
