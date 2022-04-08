@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import { delete_, get, post } from "../utils/api"
+import { delete_, get, post, put } from "../utils/api"
 import { List as AList, Button, Modal, Input, Radio, Checkbox } from "antd";
-import { setDayWithOptions } from "date-fns/fp";
+import Item from "antd/lib/list/Item";
 
-type Item = {
-	id: number,
-	option: string,
-}
 
 export const AddModal = (props: { visible: boolean, onOk: (options: string[]) => void, onCancel: (options: string[]) => void, onError: (err: Error) => void }) => {
 	const [state, setState] = useState<string[]>([""]);
@@ -32,34 +28,69 @@ export const AddModal = (props: { visible: boolean, onOk: (options: string[]) =>
 
 }
 
-export const List = (props: { question_id: string, onError: (err: Error) => void }) => {
-	const [state, setState] = useState<Item[]>();
+type Item = {
+	id: number,
+	option: string,
+	checked: boolean,
+}
+
+type ListResponse = {
+	question_type: "Single" | "Multi",
+	items: Item[],
+}
+
+
+
+export const List = ({ question_id }: { question_id: string }) => {
+	const [state, setState] = useState<ListResponse>({ question_type: "Single", items: [] });
 	const [visible, setVisible] = useState<boolean>(false);
 	const add = (options: string[]) => {
-		post(`/questions/${props.question_id}/options`, { body: options }).then(() => { setVisible(false) }).catch(reason => { throw reason });
+		post(`/questions/${question_id}/options`, { body: options }).then(() => { setVisible(false) }).catch(reason => { throw reason });
 		setVisible(false);
 	}
-	const remove = (option_id: number) => {
+	const remove = (option_id: number, i: number) => {
 		delete_(`/options/${option_id}`).then(() => {
-			const newState = state?.filter(o => o.id !== option_id);
-			setState(newState);
-		}).catch(reason => { props.onError(reason) })
+			const newItems = [...state.items];
+			newItems.splice(i, 1);
+			setState({ ...state, items: newItems });
+		}).catch(reason => { throw reason })
+	}
+
+	const submit = () => {
+		put(`/questions/${question_id}/answers`, { body: state.items.filter(item => item.checked).map(item => item.id) }).then().catch(reason => { throw reason })
 	}
 	useEffect(() => {
-		get<Item[]>(`/questions/${props.question_id}/options`).then(res => { setState(res) }).catch(reason => { props.onError(reason) });
-	}, [props])
+		get<ListResponse>(`/questions/${question_id}/options`).then(res => { setState(res) }).catch(reason => { throw reason });
+	}, [question_id])
 
 	return <div>
 		<Button onClick={() => { setVisible(!visible) }}>Add Option</Button>
-		<AddModal onOk={add} onCancel={() => { }} visible={visible} onError={props.onError} />
+		<AddModal onOk={add} onCancel={() => { }} visible={visible} onError={(e) => { throw e }} />
 		<AList split={true}>
-			{state?.map(o => {
-				return <div><span>o.option</span> <Button onClick={() => {
-					remove(o.id)
-				}}>Remove</Button></div>
-			})}
-		</AList>
-	</div>
+			{state.question_type === "Single"
+				? state.items.map((o, i) => {
+					return <div>
+						<Radio checked={o.checked} onChange={(event) => {
+							const newItems = [...state.items].map(item => { return { ...item, checked: false } });
+							newItems[i].checked = event.target.checked;
+							setState({ ...state, items: newItems });
+						}}>{o.option}</Radio>
+						<Button onClick={() => { remove(o.id, i) }}>Remove</Button>
+					</div>
+				})
+				: state.items.map((o, i) => {
+					return <div>
+						<Checkbox checked={o.checked} onChange={(event) => {
+							const newItems = [...state.items];
+							newItems[i].checked = event.target.checked;
+							setState({ ...state, items: newItems });
+						}}>{o.option}</Checkbox>
+						<Button onClick={() => { remove(o.id, i) }}>Remove</Button>
+					</div>
+				})}
+		</AList >
+		<Button onClick={submit}>Submit</Button>
+	</div >
 }
 
 export const Create = (props: { onError: (err: Error) => void, options: string[], setOptions: (options: string[]) => void }) => {

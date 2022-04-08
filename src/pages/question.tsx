@@ -1,15 +1,15 @@
 import { Input, Button, Alert, Modal, Select, Table } from "antd";
 import { useEffect, useState, useReducer } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { Alert as AlertModel } from "../models/alert";
 import { Detail as QuestionDetail } from "../models/question";
 import { Create as OptCreate, Item as OptItem } from "../models/opt";
-import { get, post, put, delete_, HttpError } from "../utils/api";
+import { get, post, put, delete_ } from "../utils/api";
 import "antd/dist/antd.css";
-import { List as QuestionListComponent } from "../components/questions";
+import { List as CQuestionList } from "../components/questions";
 
-import { Create as QuestionCreate } from "../components/questions";
-import { Create as OptionCreate } from "../components/options";
+import { Create as QuestionCreate, Detail as CQuestionDetail } from "../components/questions";
+import { Create as OptionCreate, List as COptionList } from "../components/options";
 
 
 
@@ -63,34 +63,9 @@ export const Detail = () => {
 	}, [])
 
 	return <div>
-		{data.alert && <Alert type={data.alert.type} message={data.alert.message} banner={true} />}
-		<Input disabled={true} value={data.question?.id} />
-		<Input disabled={true} value={data.question?.description} />
-		<Input disabled={true} value={data.question?.type_} />
-		<label>Opts</label>
-		<Button onClick={() => { setData({ ...data, modalVisible: true }) }}>Add Options</Button>
-		{data.question?.opts.map((o, i) => {
-			return <Input disabled={true} value={o.option} />
-		})}
-		<Modal title="Add Options" onCancel={() => { setData({ ...data, newOpts: [], modalVisible: false }) }} onOk={() => { addOpts().catch((reason) => { setData({ ...data, alert: { type: "error", message: reason } }) }) }} visible={data.modalVisible}>
-			<Button onClick={() => { setData({ ...data, newOpts: [...data.newOpts, { option: "" }] }) }}>Add</Button>
-			{
-				data.newOpts.map((o, i) => {
-					return <div>
-						<Input style={{ "display": "inline-block", "width": "50%" }} placeholder="Option" value={o.option} onChange={(event) => {
-							const newList = [...data.newOpts];
-							newList[i].option = event.target.value;
-							setData({ ...data, newOpts: newList });
-						}} />
-						<Button style={{ "display": "inline-block" }} onClick={() => {
-							const newList = [...data.newOpts];
-							newList.splice(i, 1);
-							setData({ ...data, newOpts: newList });
-						}}>Remove</Button>
-					</div>
-				})
-			}
-		</Modal>
+		<CQuestionDetail question_id={question_id!} />
+		<COptionList question_id={question_id!} />
+
 	</div>
 }
 
@@ -218,21 +193,6 @@ export const Update = () => {
 
 
 export const List = () => {
-	const nav = useNavigate();
-	const [error, setError] = useState<string | null>(null);
-	const onError = (err: Error) => {
-		if (err instanceof HttpError && err.status === 401) {
-			nav("/login");
-			return;
-		}
-		setError(err.message);
-		setTimeout(() => {
-			setError(null);
-		}, 3000);
-
-	}
-	return <div>
-		{error && <Alert type="error" message={error} />}
-		<QuestionListComponent onError={onError} />
-	</div>
+	const { vote_id } = useParams();
+	return <CQuestionList vote_id={vote_id!} />
 }

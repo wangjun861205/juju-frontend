@@ -2,15 +2,21 @@ import Calendar from "../components/calendar"
 import { Input, Button, Alert, Table, Pagination, Select } from "antd";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Detail as VoteDetail, Update as VoteUpdate } from "../models/vote";
+import { Detail as VoteDetail } from "../models/vote";
 import { Alert as AlertModel } from "../models/alert";
-import moment from "moment";
 import {
 	MuiPickersUtilsProvider,
 	KeyboardDatePicker
 } from '@material-ui/pickers';
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
+import { get, post } from "../utils/api";
+import { _Report, Report as QuestionReport, List as CQuestionList } from "../components/questions";
+import { Moment } from "moment";
+import { DatePicker } from "antd";
+import { U as DateRangeUpdate } from "../components/date";
+import { Detail as CVoteDetail, Update as CVoteUpdate } from "../components/vote";
+import { Report as DateReport } from "../components/date";
 
 
 export type Vote = {
@@ -19,44 +25,35 @@ export type Vote = {
 	deadline: string | null | undefined,
 }
 
+type Creation = {
+	name: string,
+	deadline: Moment | null,
+}
+
+type CreationResponse = {
+	id: number,
+}
+
 export const CreateVote = () => {
 	const { organization_id } = useParams();
-	const [data, setData] = useState<{
-		organization_id: number,
-		name: string,
-		deadline: string | null | undefined,
-	}>({
-		organization_id: ~~organization_id!,
-		name: "",
-		deadline: null,
-	})
+	const [data, setData] = useState<Creation>({ name: "", deadline: null });
 
 
 	const [alert, setAlert] = useState("");
 	const nav = useNavigate();
 
 	const create = async () => {
-		const res = await fetch("/votes", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(data),
-		});
-		if (res.status !== 200) {
-			setAlert(res.statusText);
-			setTimeout(() => {
-				setAlert("");
-			}, 2000)
-			return
-		}
-		nav(`/organizations/${organization_id}`)
+		post<CreationResponse>(`/organizations/${organization_id}/votes`, { body: data }).then((res) => {
+			nav(`/organizations/${organization_id}`);
+		}).catch(reason => {
+			console.log(reason);
+		})
 	}
 
 	return <div>
 		{alert !== "" && <Alert type="error" message={alert} banner={true} />}
 		<Input placeholder="Name" onChange={(e) => { setData({ ...data, name: e.target.value }) }} />
-		<MuiPickersUtilsProvider utils={DateFnsUtils}>
-			<KeyboardDatePicker label="deadline" value={data.deadline} onChange={(date) => { setData({ ...data, deadline: date?.toISOString().slice(0, 10) }) }} />
-		</MuiPickersUtilsProvider>
+		<DatePicker value={data.deadline} onChange={(date) => { setData({ ...data, deadline: date }) }} />
 		<Button onClick={() => { create().catch((r) => { setAlert(r) }) }}>Create</Button>
 
 	</div>
@@ -101,6 +98,11 @@ export const VoteList = () => {
 			key: "status",
 		},
 		{
+			title: "Has Updated",
+			dataIndex: "has_updated",
+			key: "has_updated",
+		},
+		{
 			title: "Actions",
 			dataIndex: "",
 			key: "",
@@ -120,124 +122,39 @@ export const VoteList = () => {
 
 }
 
-interface Stringer {
-	toString(): string
-}
 
 
 
 export const Detail = () => {
 	const nav = useNavigate();
-	const { organization_id, vote_id } = useParams();
-	const [data, setData] = useState<{
-		vote: VoteDetail | null,
-		alert: AlertModel | null,
-	}>({ vote: null, alert: null })
-	const fetchData = async () => {
-		try {
-			const res = await fetch(`/votes/${vote_id}`);
-			if (res.status !== 200) {
-				setData({ ...data, alert: { type: "error", message: res.statusText } });
-			}
-			const vote: VoteDetail = JSON.parse(await res.text());
-			setData({ ...data, vote: vote });
-		} catch (reason) {
-			setData({ ...data, alert: { type: "error", message: (reason as Stringer)?.toString() } });
-			console.log(reason);
-		}
+	const { vote_id } = useParams();
 
-	}
-	useEffect(() => { fetchData() }, [])
-
-	const questionColumns = [
-		{
-			title: "ID",
-			dataIndex: "id",
-			key: "id",
-		},
-		{
-			title: "Description",
-			dataIndex: "description",
-			key: "description",
-		},
-		{
-			title: "HasAnswered",
-			dataIndex: "has_answered"
-		},
-		{
-			title: "Actions",
-			dataIndex: "",
-			key: "",
-			render: (record: { id: number }) => {
-				return <Button onClick={(event) => {
-					event.stopPropagation();
-					nav(`/questions/${record.id}/update`);
-				}}>Update</Button>
-			}
-		}
-	]
-
-	const onRow = (record: { id: number }) => {
-		return {
-			onClick: () => {
-				nav(`/organizations/${organization_id}/votes/${vote_id}/questions/${record.id}/detail`)
-			}
-		}
-	}
 
 	return <div>
-		<Input disabled={true} value={data.vote?.vote.id} />
-		<Input disabled={true} value={data.vote?.vote.name} />
-		<Input disabled={true} value={data.vote?.vote.deadline || ""} />
-		<Select disabled={true} value={data.vote?.vote.status} />
-		<Calendar picked={new Set(data.vote?.dates)} />
-		<Button onClick={() => { nav(`/organizations/${organization_id}/votes/${vote_id}/questions/create`) }}>Add Question</Button>
-		<Table dataSource={data.vote?.questions} columns={questionColumns} onRow={onRow} />
+		<CVoteDetail id={vote_id!} />
+		<DateRangeUpdate vote_id={vote_id!} />
+		<Button onClick={() => { nav(`/votes/${vote_id}/questions/create`) }}>Add Question</Button>
+		<CQuestionList vote_id={vote_id!} />
 	</div>
 }
 
 
 export const Update = () => {
-	const { organization_id, vote_id } = useParams();
-	const [data, setData] = useState<{ alert: AlertModel, vote: VoteUpdate }>({ alert: { type: undefined, message: undefined }, vote: { name: "", deadline: null } });
-	const fetchData = async () => {
-		const res = await fetch(`/organizations/${organization_id}/votes/${vote_id}`);
-		if (res.status !== 200) {
-			throw Error(`invalid response status: ${res.statusText}`)
-		}
-		const { vote: { name, deadline }, ..._ } = JSON.parse(await res.text());
-		return { name: name, deadline: deadline }
-	}
+	const { vote_id } = useParams();
+	return <CVoteUpdate id={vote_id!} />
+}
 
-	const update = async () => {
-		const res = await fetch(`/organizations/${organization_id}/votes/${vote_id}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(data.vote)
-		});
-		if (res.status !== 200) {
-			throw Error(`invalid response status: ${res.statusText}`)
-		}
-	}
+export const Report = () => {
+	const nav = useNavigate();
+	const { vote_id } = useParams();
+	const [questionReport, setQuestionReport] = useState<_Report[]>([]);
 	useEffect(() => {
-		fetchData().catch((reason) => {
-			setData({ ...data, alert: { type: "error", message: reason } });
-		}).then((vote) => {
-			setData({ ...data, vote: vote as VoteUpdate })
-		})
+		get<_Report[]>(`/votes/${vote_id}/questions/report`, { onForbidden: () => { nav("/login") } }).then(r => setQuestionReport(r)).catch(reason => console.log(reason));
 	}, [])
-
 	return <div>
-		{data.alert.type && <Alert type={data.alert.type} message={data.alert.message} />}
-		<Input value={data.vote.name} onChange={(e) => { setData({ ...data, vote: { ...data.vote, name: e.target.value } }) }} />
-		<MuiPickersUtilsProvider utils={DateFnsUtils}>
-			<KeyboardDatePicker label="deadline" format={"Y-MM-dd"} value={data.vote.deadline} onChange={(date) => { setData({ ...data, vote: { ...data.vote, deadline: date?.toISOString().slice(0, 10) } }) }} />
-		</MuiPickersUtilsProvider>
-		<Button onClick={() => {
-			update().catch((reason) => {
-				setData({ ...data, alert: { type: "error", message: reason } })
-			})
-		}}>Update</Button>
-
+		<DateReport vote_id={vote_id!} />
+		{questionReport.map(r => <QuestionReport report={r} />)}
 	</div>
+
+
 }

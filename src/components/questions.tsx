@@ -1,29 +1,35 @@
-import { useNavigate } from "react-router";
-import { useParams } from "react-router";
 import { useState, useEffect } from "react";
-import { get, put } from "../utils/api";
+import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
 import { Button, Input, Select, Table } from "antd";
+import { useNavigate } from "react-router";
 import "antd/dist/antd.css";
-import { StringGradients } from "antd/lib/progress/progress";
-import { stringLiteral } from "@babel/types";
-import { differenceInQuartersWithOptions } from "date-fns/fp";
 
-type QuestionItem = {
+type Item = {
 	id: number,
 	description: string,
 	has_answered: boolean,
 }
 
-export const List = (props: { onError: (err: Error) => void }) => {
+export const List = ({ vote_id }: { vote_id: string }) => {
+	const [state, setState] = useState<ListResponse<Item>>({ list: [], total: 0 });
 	const nav = useNavigate();
-	const { vote_id } = useParams();
-	const [state, setState] = useState<{ list: QuestionItem[], total: number } | undefined>();
-
 	useEffect(() => {
-		get<{ list: QuestionItem[], total: number }>(`/votes/${vote_id}/questions`).then(({ list, total }) => {
-			setState({ list: list, total: total });
-		}).catch(reason => { props.onError(reason) });
+		get<ListResponse<Item>>(`/votes/${vote_id}/questions`).then((res) => {
+			setState(res);
+		}).catch(reason => { console.log(reason) });
 	}, [vote_id]);
+
+	const _delete = (item: Item, i: number) => {
+		delete_<DeleteResponse>(`/questions/${item.id}`).then(res => {
+			const newList = [...state.list];
+			newList.splice(i, 1);
+			setState({ list: newList, total: state.total - 1 })
+
+		}).catch(reason => {
+			console.log(reason);
+		});
+	}
+
 
 	const columns = [
 		{
@@ -43,16 +49,29 @@ export const List = (props: { onError: (err: Error) => void }) => {
 			render: (result: boolean) => { return result.toString() }
 		},
 		{
+			title: "Has Updated",
+			dataIndex: "has_updated",
+			key: "has_updated",
+			render: (result: boolean) => { return result.toString() }
+		},
+		{
 			title: "Actions",
-			render: (record: { id: number }) => {
+			render: (_: any, record: Item, i: number) => {
 				return <div>
-					<Button>Update</Button>
+					<Button onClick={(event) => { event.stopPropagation(); nav(`/questions/${record.id}/update`); }}>Update</Button>
+					<Button onClick={(event) => { event.stopPropagation(); _delete(record, i) }}>Delete</Button>
 				</div>
 			}
 		}
 	]
 
-	return <Table columns={columns} dataSource={state?.list} />
+	return <Table columns={columns} dataSource={state.list} onRow={(item: Item) => {
+		return {
+			onClick: () => {
+				nav(`/questions/${item.id}`);
+			}
+		}
+	}} />
 }
 
 type QuestionDetail = {
@@ -61,13 +80,13 @@ type QuestionDetail = {
 	type_: "Single" | "Multi",
 }
 
-export const Detail = (props: { onError: (err: Error) => void, question_id: string }) => {
+export const Detail = ({ question_id }: { question_id: string }) => {
 	const [state, setState] = useState<QuestionDetail>();
 	useEffect(() => {
-		get<QuestionDetail>(`/questions/${props.question_id}`).then(resp => {
+		get<QuestionDetail>(`/questions/${question_id}`).then(resp => {
 			setState(resp);
-		}).catch(reason => { props.onError(reason) })
-	}, [props]);
+		}).catch(reason => { throw reason })
+	}, [question_id]);
 
 	return <div>
 		<p><label>ID: </label> {state?.id}</p>
@@ -113,4 +132,21 @@ export const Create = (props: { onError: (err: Error) => void, question: Questio
 		<Select options={[{ label: "Single", value: "Single" }, { label: "Multi", value: "Multi" }]} value={props.question.type_} onChange={(value) => { props.setQuestion({ ...props.question, type_: value }) }} />
 	</div>
 
+}
+
+export type _Report = {
+	question: string,
+	options: {
+		option: string,
+		percentage: number,
+	}[],
+}
+
+export const Report = ({ report }: { report: _Report }) => {
+	return <div>
+		<h2>{report.question}</h2>
+		{report.options.map(o => {
+			return <li><span>{o.option}</span><span>{o.percentage / 100}%</span></li>
+		})}
+	</div>
 }

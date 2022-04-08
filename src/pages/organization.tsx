@@ -1,8 +1,12 @@
-import { useEffect, useReducer, useState } from "react"
-import { Button, Input, Pagination, Table, Alert } from "antd";
+import { useEffect, useState, useRef } from "react"
+import { Button, Input, Pagination, Table, Alert, Checkbox } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
 import { Vote } from "./votes";
+import { get, put, delete_, post } from "../utils/api";
+import { List } from "../utils/response";
+import { List as CVoteList } from "../components/vote";
+import { Detail as COrganizationDetail } from "../components/organization";
 import "antd/dist/antd.css";
 
 
@@ -70,12 +74,18 @@ const OrganizationList = () => {
 			key: "vote_count",
 		},
 		{
+			title: "Has New Vote",
+			dataIndex: "has_new_vote",
+			key: "has_new_vote",
+			render: (v: boolean) => { return <div>{`${v}`}</div> }
+		},
+		{
 			title: "Actions",
 			key: "actions",
-			render: (record: { id: number }) => {
+			render: ({ id }: { id: number }) => {
 				return <div>
-					<Button>Edit</Button>
-					<Button onClick={(e) => { e.stopPropagation(); del(record.id) }}>Delete</Button>
+					<Button onClick={(e) => { e.stopPropagation(); nav(`/organizations/${id}/update`) }}>Edit</Button>
+					<Button onClick={(e) => { e.stopPropagation(); del(id) }}>Delete</Button>
 				</div >
 			}
 		}
@@ -135,89 +145,127 @@ const CreateOrganization = () => {
 	</div>
 }
 
-type Organization = {
-	id: number,
-	name: string,
-	votes: Vote[],
+
+type DeleteResponse = {
+	deleted: number
 }
 
 const Detail = () => {
 	const nav = useNavigate();
 	const { organization_id } = useParams();
-	const dispatcher = (state: { alert: string | null, data: Organization | null }, action: { type: string, message: string | null, data: Organization | null }) => {
-		switch (action.type) {
-			case "alert":
-				return { ...state, alert: action.message }
-			case "data":
-				return { ...state, data: action.data }
-			default:
-				throw new Error("unknown action type");
-		}
-
-	}
-	const [state, dispatch] = useReducer(dispatcher, { alert: null, data: null })
-	const fetchData = async () => {
-		const res = await fetch(`/organizations/${organization_id}`);
-		if (res.status !== 200) {
-			dispatch({ type: "alert", message: res.statusText, data: null });
-			return
-		}
-		const org = JSON.parse(await res.text());
-		dispatch({ type: "data", message: null, data: org });
-	}
-	useEffect(() => {
-		fetchData()
-	}, [])
-
-	const columns = [
-		{
-			title: "ID",
-			dataIndex: "id",
-			key: "id",
-		},
-		{
-			title: "Name",
-			dataIndex: "name",
-			key: "name",
-		},
-		{
-			title: "Status",
-			dataIndex: "status",
-			key: "status",
-		},
-		{
-			title: "Deadline",
-			dataIndex: "deadline",
-			key: "deadline",
-		},
-		{
-			title: "Actions",
-			dataIndex: "",
-			key: "",
-			render: (record: { id: number }) => {
-				return <div>
-					<Button onClick={(event) => { event.stopPropagation(); nav(`/organizations/${organization_id}/votes/${record.id}/update/`) }}>Update</Button>
-				</div>
-			}
-		}
-
-	]
-
-	const onRow = (record: { id: number }) => {
-		return {
-			onClick: () => {
-				nav(`/organizations/${organization_id}/votes/${record.id}/detail`);
-			}
-		}
-	}
 
 	return <div>
-		<Input disabled={true} value={state.data?.id} />
-		<Input disabled={true} value={state.data?.name} />
-		<Table rowKey="id" dataSource={state.data?.votes} columns={columns} onRow={onRow} />
+		<COrganizationDetail organization_id={organization_id!} />
+		<Button onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
+		<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
+		<CVoteList organization_id={organization_id!} />
 	</div>
 
 
 }
 
-export { OrganizationList, CreateOrganization, Detail };
+type Updation = {
+	name: string,
+}
+
+const Update = () => {
+	const { organization_id } = useParams();
+	const [data, setData] = useState<Updation>();
+	useEffect(() => {
+		get<Updation>(`/organizations/${organization_id}`).then(org => {
+			setData(org);
+		}).catch(reason => console.log(reason));
+	}, []);
+	const update = () => {
+		put(`/organizations/${organization_id}`, { body: data }).then(_ => { }).catch(reason => console.log(reason));
+	}
+	return <div>
+		<Input value={data?.name} onChange={(event) => { setData({ ...data, name: event.target.value }) }} />
+		<Button onClick={update}>Update</Button>
+	</div>
+}
+
+type User = {
+	id: number,
+	nickname: string,
+}
+
+type Organization = {
+	id: number,
+	name: string,
+}
+
+
+
+const AddUsers = () => {
+	const { organization_id } = useParams();
+	const [org, setOrg] = useState<Organization | undefined>();
+	const [phone, setPhone] = useState("");
+	const [users, setUsers] = useState<User[]>([]);
+	const [page, setPage] = useState(1);
+	const [total, setTotal] = useState(0);
+	const [adds, setAdds] = useState<number[]>([]);
+	const isInitialRender = useRef(true);
+
+
+	const search = () => {
+		get<List<User>>("/users", { params: { phone: phone, page: page, size: 10, exclude_org_id: organization_id } }).then(res => { setUsers(res.list); setTotal(res.total) }).catch((reason) => {
+			console.error(reason);
+		});
+	}
+	const add = () => {
+		post(`/organizations/${organization_id}/users`, { body: adds }).then(() => {
+			console.log("success");
+		}).catch((reason) => {
+			console.error(reason);
+		});
+	}
+	const getOrg = () => {
+		get<Organization>(`/organizations/${organization_id}`).then(res => setOrg(res)).catch(reason => console.error(reason));
+	}
+	useEffect(() => {
+		if (isInitialRender.current) {
+			isInitialRender.current = false;
+		} else {
+			search();
+		}
+	}, [page])
+	const columns = [
+		{
+			title: "ID",
+			dataIndex: "id",
+		},
+		{
+			title: "Nickname",
+			dataIndex: "nickname",
+		},
+		{
+			title: "Action",
+			render: ({ id }: { id: number }) => {
+				return <Checkbox onChange={(e) => {
+					if (e.target.checked) {
+						setAdds([...adds].concat(id));
+					} else {
+						setAdds([...adds].splice(adds.indexOf(id), 1));
+					}
+				}}></Checkbox>
+			},
+		}
+	]
+
+	return <div>
+		<h1>{org?.name || ""}</h1>
+		<Input placeholder="Phone" onChange={(e) => { setPhone(e.target.value) }} />
+		<Button onClick={search}>Search</Button>
+		<Button onClick={add}>Submit</Button>
+		<Table dataSource={users} columns={columns}></Table>
+		<Pagination total={total} current={page} onChange={(p) => setPage(p)}></Pagination>
+
+	</div>
+
+}
+
+
+
+
+export { OrganizationList, CreateOrganization, Detail, Update, AddUsers };
