@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react"
 import { Table } from "antd"
 import { get } from "../utils/api"
 import { useParams } from "react-router";
 import { List as ResponseList } from "../utils/response"
+import { LoadingContext } from "../wrapper/spin"
 
 type ListProps = {
 	setLoading: (loading: boolean) => void,
@@ -13,12 +14,13 @@ type User = {
 	nickname: string,
 }
 
-const List = ({ setLoading }: ListProps) => {
+const List = () => {
+	const setLoading = useContext(LoadingContext);
 	const [users, setUsers] = useState<ResponseList<User> | undefined>();
 	const [page, setPage] = useState(1);
 	const { org_id } = useParams();
 	const fetch = () => {
-		setLoading(true);
+		setLoading!(true)
 		get<ResponseList<User>>(`/users`, {
 			params: {
 				org_id: org_id,
@@ -29,7 +31,7 @@ const List = ({ setLoading }: ListProps) => {
 			setUsers(res);
 		}).catch(reason => console.error(reason))
 			.finally(() => {
-				setLoading(false);
+				setLoading!(false);
 			});
 	}
 	useEffect(fetch, [page]);

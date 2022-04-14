@@ -1,11 +1,14 @@
 import { Spin } from "antd";
-import { useState, FunctionComponent } from "react"
+import { useState, createContext} from "react"
+
+export const LoadingContext = createContext<((state: boolean) => void) | null >(null);
 
 
-export const LoadingWrapper = ({ Inner }: { Inner: FunctionComponent<{ setLoading: (loading: boolean) => void }> }) => {
+
+export const LoadingWrapper = (props: any) => {
 	const [loading, setLoading] = useState(true);
-	return <div>
+	return <LoadingContext.Provider value={setLoading}>
 		<Spin spinning={loading}></Spin>
-		<Inner setLoading={setLoading} />
-	</div>
+		{ props.children }
+		</LoadingContext.Provider>
 }

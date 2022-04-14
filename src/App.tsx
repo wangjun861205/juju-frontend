@@ -8,7 +8,8 @@ import { Create as QuestionCreate, Detail as QuestionDetail, Update as QuestionU
 import { List as AnswerList } from "./pages/answer";
 import { Update as DateUpdate, Report as DateReport } from "./pages/date";
 import { Report } from "./pages/votes";
-import { Find as FindUser } from "./pages/user";
+import { Find as FindUser, List as UserList } from "./pages/user";
+
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -57,8 +58,9 @@ function App() {
             <Route path="answers" element={<AnswerList />} />
           </Route>
         </Route>
-        <Route path="/users">
-          <Route path="" element={<FindUser />} />
+        <Route path="/users" >
+          <Route path="" element={<UserList />} />
+          {/* <Route path="" element={<FindUser />} /> */}
         </Route>
       </Routes>
     </BrowserRouter>
