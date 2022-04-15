@@ -1,16 +1,16 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useContext } from "react"
 import { Button, Input, Pagination, Table, Alert, Checkbox } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
-import { Vote } from "./votes";
-import { get, put, delete_, post } from "../utils/api";
-import { List } from "../utils/response";
+import { get, put, post } from "../utils/api";
+import { List as ResponseList } from "../utils/response";
 import { List as CVoteList } from "../components/vote";
 import { Detail as COrganizationDetail } from "../components/organization";
+import { LoadingWrapper, LoadingContext } from "../wrapper/spin";
 import "antd/dist/antd.css";
 
 
-const OrganizationList = () => {
+const List = () => {
 	const nav = useNavigate();
 	const [data, setData] = useState({ page: 1, size: 10, total: 0, orgs: [] });
 	const [alert, setAlert] = useState<{ type: "error" | "info", message: string } | null>(null);
@@ -103,7 +103,6 @@ const OrganizationList = () => {
 			}
 		}} />
 		<Pagination defaultCurrent={data.page} total={data.total} showSizeChanger={true} onChange={(page, pageSize) => { setData({ ...data, page: page, size: pageSize }) }} />
-
 	</div>
 
 }
@@ -209,7 +208,7 @@ const AddUsers = () => {
 
 
 	const search = () => {
-		get<List<User>>("/users", { params: { phone: phone, page: page, size: 10, exclude_org_id: organization_id } }).then(res => { setUsers(res.list); setTotal(res.total) }).catch((reason) => {
+		get<ResponseList<User>>("/users", { params: { phone: phone, page: page, size: 10, exclude_org_id: organization_id } }).then(res => { setUsers(res.list); setTotal(res.total) }).catch((reason) => {
 			console.error(reason);
 		});
 	}
@@ -268,4 +267,4 @@ const AddUsers = () => {
 
 
 
-export { OrganizationList, CreateOrganization, Detail, Update, AddUsers };
+export { List, CreateOrganization, Detail, Update, AddUsers };
