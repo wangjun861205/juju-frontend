@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react"
-import { get } from "../utils/api";
-import { List as CList } from "antd";
+import { useEffect, useState,  useContext } from "react"
+import { get, delete_ } from "../utils/api";
+import { List as CList, Button, Table } from "antd";
+import { AlertContext } from "../wrapper/alert";
+import { LoadingContext } from "../wrapper/spin";
+import { List as ResponseList } from "../utils/response";
+import { useNavigate } from "react-router";
+import { PaginationContext } from "../wrapper/pagination";
 
 type Item = {
 	id: number,
@@ -18,4 +23,88 @@ export const Detail = ({ organization_id }: { organization_id: string }) => {
 		<div><label>Name: </label><span>{data.name}</span></div>
 	</CList>
 
+}
+
+type ListItem = {
+	id: number,
+	name: string,
+	vote_count: number,
+	has_new_vote: boolean,
+}
+
+
+export const List = () => {
+	const [orgs,  setOrgs] = useState<ResponseList<ListItem>>();
+	const setAlert = useContext(AlertContext);
+	const setLoading = useContext(LoadingContext);
+	const nav = useNavigate();
+	// const [{page, size}, setPagination] = useState<{page: number, size: number}>({page: 1, size: 10});
+
+	const {page, size, setTotal} = useContext(PaginationContext);
+
+	const del = async (id: number) => {
+		setLoading!(true);
+		delete_(`/organizations/${id}`).then(() => {
+			setAlert!({type: "success", message: "success delete"});
+		}).catch((reason) => {
+			setAlert!({type: "error", message: reason});
+		}).finally(() => {
+			setLoading!(false);
+			setTimeout(() => {
+				setAlert!(null);
+			}, 2000);
+		})
+	}
+
+	const columns = [
+		{
+			title: "ID",
+			dataIndex: "id",
+			key: "id",
+		},
+		{
+			title: "Name",
+			dataIndex: "name",
+			key: "name"
+		},
+		{
+			title: "Vote Count",
+			dataIndex: "vote_count",
+			key: "vote_count",
+		},
+		{
+			title: "Has New Vote",
+			dataIndex: "has_new_vote",
+			key: "has_new_vote",
+			render: (v: boolean) => { return <div>{`${v}`}</div> }
+		},
+		{
+			title: "Actions",
+			key: "actions",
+			render: ({ id }: { id: number }) => {
+				return <div>
+					<Button onClick={(e) => { e.stopPropagation(); nav(`/organizations/${id}/update`) }}>Edit</Button>
+					<Button onClick={(e) => { e.stopPropagation(); del(id) }}>Delete</Button>
+				</div >
+			}
+		}
+	]
+	const fetch = () => {
+		setLoading!(true);
+		get<ResponseList<ListItem>>("/organizations", {params: {page: page, size: size}}).then(res => {
+			setOrgs(res);
+			setTotal!(res.total);
+		}).catch(reason => {
+			setAlert!({message: `${reason}`, type: "error"});
+			setTimeout(() => {setAlert!(null)}, 2000);
+		}).finally(() => {
+			setLoading!(false);
+		});
+	}
+
+	useEffect(() => {
+		fetch();
+	}, [page, size]);
+	
+	return <Table columns={columns} dataSource={orgs?.list} />
 }
