@@ -5,111 +5,23 @@ import { HttpError } from "../errors";
 import { get, put, post } from "../utils/api";
 import { List as ResponseList } from "../utils/response";
 import { List as CVoteList } from "../components/vote";
-import { Detail as COrganizationDetail, List as OrganizationList } from "../components/organization";
+import { Detail as COrganizationDetail, List as OrganizationList, Create as OrganizationCreate } from "../components/organization";
 import { LoadingWrapper, LoadingProps } from "../wrapper/spin";
-import { PaginationWrapper } from "../wrapper/pagination";
+import { PaginationWrapper, PaginationProps } from "../wrapper/pagination";
 import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
 
 
-// const List = () => {
-// 	const nav = useNavigate();
-// 	const [data, setData] = useState({ page: 1, size: 10, total: 0, orgs: [] });
-// 	const [alert, setAlert] = useState<{ type: "error" | "info", message: string } | null>(null);
-// 	const fetchData = async () => {
-// 		const res = await fetch("/organizations?" + new URLSearchParams({ page: data.page.toString(), size: data.size.toString() }));
-// 		if (res.status !== 200) {
-// 			throw new HttpError(res.status, res.statusText);
-// 		}
-// 		return JSON.parse(await res.text());
-// 	}
-// 	useEffect(() => {
-// 		fetchData().then((resp) => {
-// 			setData({ ...data, orgs: resp.list, total: resp.total })
-// 		}).catch((e) => {
-// 			switch (true) {
-// 				case e instanceof HttpError:
-// 					switch (e.status) {
-// 						case 401:
-// 							nav("/login");
-// 							break;
-// 					}
-// 					break;
-// 				default:
-// 					console.log(e);
-// 					break;
-// 			}
-// 		})
-// 	}, [data.page, data.size]);
 
-// 	const del = async (id: number) => {
-// 		const res = await fetch(`/organizations/${id}`, {
-// 			method: "DELETE",
-// 		});
-// 		if (res.status !== 200) {
-// 			setAlert({ type: "error", message: res.statusText });
-// 			return
-// 		}
-// 		setAlert({ type: "info", message: "delete success" });
-// 		setTimeout(() => {
-// 			setAlert(null);
-// 			fetchData().then((resp) => { setData({ ...data, orgs: resp.list, total: resp.total }) });
-// 		}, 2000)
+const List = PaginationWrapper(AlertWrapper(LoadingWrapper((props: PaginationProps & AlertProps & LoadingProps) => {
+	const nav = useNavigate();
+	return <>
+		<Button onClick={() => nav("/organizations/create")} >Create</Button>
+		<OrganizationList {...props} />
+	</>
+})));
 
-// 	}
-
-
-// 	const columns = [
-// 		{
-// 			title: "ID",
-// 			dataIndex: "id",
-// 			key: "id",
-// 		},
-// 		{
-// 			title: "Name",
-// 			dataIndex: "name",
-// 			key: "name"
-// 		},
-// 		{
-// 			title: "Vote Count",
-// 			dataIndex: "vote_count",
-// 			key: "vote_count",
-// 		},
-// 		{
-// 			title: "Has New Vote",
-// 			dataIndex: "has_new_vote",
-// 			key: "has_new_vote",
-// 			render: (v: boolean) => { return <div>{`${v}`}</div> }
-// 		},
-// 		{
-// 			title: "Actions",
-// 			key: "actions",
-// 			render: ({ id }: { id: number }) => {
-// 				return <div>
-// 					<Button onClick={(e) => { e.stopPropagation(); nav(`/organizations/${id}/update`) }}>Edit</Button>
-// 					<Button onClick={(e) => { e.stopPropagation(); del(id) }}>Delete</Button>
-// 				</div >
-// 			}
-// 		}
-// 	]
-
-
-// 	return <div>
-// 		{alert && <Alert type={alert!.type} message={alert!.message} banner={true} />}
-// 		<Button onClick={() => { nav("/organizations/create") }}>Create</Button>
-// 		<Table dataSource={data.orgs} columns={columns} pagination={false} onRow={(record: { id: number }) => {
-// 			return {
-// 				onClick: () => {
-// 					nav(`/organizations/${record.id}`);
-// 				}
-// 			}
-// 		}} />
-// 		<Pagination defaultCurrent={data.page} total={data.total} showSizeChanger={true} onChange={(page, pageSize) => { setData({ ...data, page: page, size: pageSize }) }} />
-// 	</div>
-
-// }
-
-const List = PaginationWrapper(AlertWrapper(LoadingWrapper(OrganizationList)));
+const Create = AlertWrapper(LoadingWrapper(OrganizationCreate));
 
 const CreateOrganization = () => {
 	const nav = useNavigate();
@@ -272,4 +184,4 @@ const AddUsers = () => {
 
 
 
-export { List, CreateOrganization, Detail, Update, AddUsers };
+export { List, Create, Detail, Update, AddUsers };

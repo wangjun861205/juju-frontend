@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react"
-import { get, delete_ } from "../utils/api";
-import { List as CList, Button, Table } from "antd";
+import { get, delete_, post } from "../utils/api";
+import { List as CList, Button, Table, Form, Input } from "antd";
 import { AlertProps } from "../wrapper/alert";
 import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
@@ -90,6 +90,10 @@ export const List = ({ setLoading, setAlert, page, size, setTotal }: LoadingProp
 			setOrgs(res);
 			setTotal!(res.total);
 		}).catch(reason => {
+			if (reason.status === 401) {
+				nav("/login");
+				return;
+			}
 			setAlert({ message: `${reason}`, type: "error" });
 			setTimeout(() => { setAlert!(null) }, 2000);
 		}).finally(() => {
@@ -101,5 +105,45 @@ export const List = ({ setLoading, setAlert, page, size, setTotal }: LoadingProp
 		fetch();
 	}, [page, size]);
 
-	return <Table columns={columns} dataSource={orgs?.list} />
+	return <Table columns={columns} dataSource={orgs?.list} pagination={false}/>
+}
+
+interface Organization {
+	name: string
+}
+
+export const Create = ({setLoading, setAlert}: LoadingProps & AlertProps) => {
+	setLoading(false);
+	const nav = useNavigate();
+	const [org, setOrg] = useState<Organization>({name: ""});
+	const [disable, setDisable] = useState(false);
+	const create = () => {
+		setDisable(true);
+		setLoading(true);
+		post("/organizations", {body: org}).then(() => {
+			setAlert({type: "success", message: "success create"});
+			setTimeout(() => {
+				setAlert(null);
+				nav("/organizations");
+			}, 2000);
+		}).catch(reason => {
+			if (reason.status === 401) {
+				nav("/login");
+				return
+			}
+			setAlert({type: "error", message: `${reason}`});
+			setTimeout(() => {
+				setAlert(null);
+			}, 2000);
+		}).finally(() => {
+			setDisable(false);
+			setLoading(false);
+		});
+	}
+	return <Form>
+		<Form.Item label="Name">
+			<Input onChange={(e) => setOrg({...org, name: e.target.value})} />
+		</Form.Item>
+		<Button onClick={() => {setDisable(true); create()}} disabled={disable} >Create</Button>
+	</Form>
 }

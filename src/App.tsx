@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import Signup from "./pages/signup";
 import Login from "./pages/login";
-import { List as OrganizationList, CreateOrganization, Detail as OrganizationDetail, Update as UpdateOrganization, AddUsers } from "./pages/organization";
+import { List as OrganizationList, Create as CreateOrganization, Detail as OrganizationDetail, Update as UpdateOrganization, AddUsers } from "./pages/organization";
 import { CreateVote, VoteList, Detail as VoteDetail, Update as VoteUpdate } from './pages/votes';
 import { Create as QuestionCreate, Detail as QuestionDetail, Update as QuestionUpdate, List as QuestionList } from "./pages/question";
 import { List as AnswerList } from "./pages/answer";
