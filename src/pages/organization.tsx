@@ -6,10 +6,10 @@ import { get, put, post } from "../utils/api";
 import { List as ResponseList } from "../utils/response";
 import { List as CVoteList } from "../components/vote";
 import { Detail as COrganizationDetail, List as OrganizationList } from "../components/organization";
-import { LoadingWrapper, LoadingContext } from "../wrapper/spin";
+import { LoadingWrapper, LoadingProps } from "../wrapper/spin";
 import { PaginationWrapper } from "../wrapper/pagination";
 import "antd/dist/antd.css";
-import { AlertWrapper } from "../wrapper/alert";
+import { AlertProps, AlertWrapper } from "../wrapper/alert";
 
 
 // const List = () => {
@@ -109,15 +109,7 @@ import { AlertWrapper } from "../wrapper/alert";
 
 // }
 
-const List = () => {
-	return <PaginationWrapper>
-			<LoadingWrapper>
-				<AlertWrapper>
-					<OrganizationList />
-				</AlertWrapper>
-			</LoadingWrapper>
-	</PaginationWrapper>
-}
+const List = PaginationWrapper(AlertWrapper(LoadingWrapper(OrganizationList)));
 
 const CreateOrganization = () => {
 	const nav = useNavigate();
@@ -275,6 +267,7 @@ const AddUsers = () => {
 	</div>
 
 }
+
 
 
 

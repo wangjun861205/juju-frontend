@@ -1,5 +1,5 @@
-import React, { FC, useState, createContext, useEffect } from "react"; import { Pagination } from "antd";
-import { ReactJSXElement } from "@emotion/react/types/jsx-namespace";
+import React, { useState, createContext } from "react";
+import { Pagination } from "antd";
 
 export interface PaginationProps {
     page: number,
@@ -7,21 +7,23 @@ export interface PaginationProps {
     setTotal: ((total: number) => void) | null,
 };
 
-type Pagination = {
+type PaginationState = {
     page: number,
     size: number,
     total: number,
 };
 
-export const PaginationContext = createContext<PaginationProps>({page: 1, size: 10, setTotal: null});
+export const PaginationContext = createContext<PaginationProps>({ page: 1, size: 10, setTotal: null });
 
-export const PaginationWrapper: FC<{}> = ({children}) => {
-    const [{page, size, total}, setPagination] = useState<Pagination>({page: 1, size: 10, total: 0});
-    const setTotal = (total: number) => { setPagination({page: page, size: size, total: total}) }
-    useEffect(() => {}, [page, size])
+export const PaginationWrapper = <P extends object>(Component: React.ComponentType<P & PaginationProps>) => {
+    const WithComponent = (props: P) => {
+        const [{ page, size, total }, setPagination] = useState<PaginationState>({ page: 1, size: 10, total: 0 });
+        const setTotal = (total: number) => { setPagination({ page: page, size: size, total: total }) }
+        return <>
+            <Component {...props} page={page} size={size} setTotal={setTotal} />
+            <Pagination onChange={(page, size) => { setPagination({ page: page, size: size, total: total }) }} total={total} />
+        </>
+    }
+    return WithComponent;
 
-    return <PaginationContext.Provider value={{page: page, size: size, setTotal: setTotal}} >
-                {children}
-                <Pagination onChange={(page, size) => {setPagination({page: page, size: size, total: total})}} total={total} />
-        </PaginationContext.Provider>
 }

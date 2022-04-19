@@ -3,7 +3,7 @@ import { Table } from "antd"
 import { get } from "../utils/api"
 import { useParams } from "react-router";
 import { List as ResponseList } from "../utils/response"
-import { LoadingContext } from "../wrapper/spin"
+import { LoadingProps } from "../wrapper/spin"
 
 type ListProps = {
 	setLoading: (loading: boolean) => void,
@@ -14,8 +14,7 @@ type User = {
 	nickname: string,
 }
 
-const List = () => {
-	const setLoading = useContext(LoadingContext);
+const List = ({ setLoading }: LoadingProps) => {
 	const [users, setUsers] = useState<ResponseList<User> | undefined>();
 	const [page, setPage] = useState(1);
 	const { org_id } = useParams();

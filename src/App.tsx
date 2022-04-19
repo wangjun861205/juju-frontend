@@ -9,6 +9,7 @@ import { List as AnswerList } from "./pages/answer";
 import { Update as DateUpdate, Report as DateReport } from "./pages/date";
 import { Report } from "./pages/votes";
 import { Find as FindUser, List as UserList } from "./pages/user";
+import { PaginationWrapper } from './wrapper/pagination';
 
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";

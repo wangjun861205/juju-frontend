@@ -1,11 +1,11 @@
-import { useEffect, useState,  useContext } from "react"
+import { useEffect, useState, useContext } from "react"
 import { get, delete_ } from "../utils/api";
 import { List as CList, Button, Table } from "antd";
-import { AlertContext } from "../wrapper/alert";
-import { LoadingContext } from "../wrapper/spin";
+import { AlertProps } from "../wrapper/alert";
 import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
-import { PaginationContext } from "../wrapper/pagination";
+import { PaginationProps } from "../wrapper/pagination";
+import { LoadingProps } from "../wrapper/spin"
 
 type Item = {
 	id: number,
@@ -33,21 +33,16 @@ type ListItem = {
 }
 
 
-export const List = () => {
-	const [orgs,  setOrgs] = useState<ResponseList<ListItem>>();
-	const setAlert = useContext(AlertContext);
-	const setLoading = useContext(LoadingContext);
+export const List = ({ setLoading, setAlert, page, size, setTotal }: LoadingProps & AlertProps & PaginationProps) => {
+	const [orgs, setOrgs] = useState<ResponseList<ListItem>>();
 	const nav = useNavigate();
-	// const [{page, size}, setPagination] = useState<{page: number, size: number}>({page: 1, size: 10});
-
-	const {page, size, setTotal} = useContext(PaginationContext);
 
 	const del = async (id: number) => {
 		setLoading!(true);
 		delete_(`/organizations/${id}`).then(() => {
-			setAlert!({type: "success", message: "success delete"});
+			setAlert!({ type: "success", message: "success delete" });
 		}).catch((reason) => {
-			setAlert!({type: "error", message: reason});
+			setAlert!({ type: "error", message: reason });
 		}).finally(() => {
 			setLoading!(false);
 			setTimeout(() => {
@@ -91,20 +86,20 @@ export const List = () => {
 	]
 	const fetch = () => {
 		setLoading!(true);
-		get<ResponseList<ListItem>>("/organizations", {params: {page: page, size: size}}).then(res => {
+		get<ResponseList<ListItem>>("/organizations", { params: { page: page, size: size } }).then(res => {
 			setOrgs(res);
 			setTotal!(res.total);
 		}).catch(reason => {
-			setAlert!({message: `${reason}`, type: "error"});
-			setTimeout(() => {setAlert!(null)}, 2000);
+			setAlert({ message: `${reason}`, type: "error" });
+			setTimeout(() => { setAlert!(null) }, 2000);
 		}).finally(() => {
-			setLoading!(false);
+			setLoading(false);
 		});
 	}
 
 	useEffect(() => {
 		fetch();
 	}, [page, size]);
-	
+
 	return <Table columns={columns} dataSource={orgs?.list} />
 }

@@ -1,15 +1,20 @@
 import { Spin } from "antd";
-import { useState, createContext } from "react"
-
-export const LoadingContext = createContext<((state: boolean) => void) | null>(null);
+import React, { useState } from "react"
 
 
+export interface LoadingProps {
+	setLoading: (loading: boolean) => void,
+}
 
-export const LoadingWrapper = (props: any) => {
-	const [loading, setLoading] = useState(true);
-	return <LoadingContext.Provider value={setLoading}>
-		<Spin spinning={loading}>
-			{props.children}
-		</Spin>
-	</LoadingContext.Provider>
+
+export const LoadingWrapper = <P extends object>(Component: React.ComponentType<P & LoadingProps>) => {
+	const WithComponent = (props: P) => {
+		const [loading, setLoading] = useState(true);
+		return <>
+			<Spin spinning={loading}>
+				<Component setLoading={setLoading} {...props} />
+			</Spin>
+		</>
+	}
+	return WithComponent
 }
