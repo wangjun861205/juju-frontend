@@ -11,3 +11,6 @@ export class HttpError extends Error {
 		return `http error(status: ${this.status}, status text: ${this.statusText})`
 	}
 }
+
+
+export const ErrForbidden = new Error("401 Forbidden");

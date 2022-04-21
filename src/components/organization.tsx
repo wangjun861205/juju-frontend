@@ -6,6 +6,8 @@ import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
 import { PaginationProps } from "../wrapper/pagination";
 import { LoadingProps } from "../wrapper/spin"
+import { Navbar } from "./navbar";
+import { ErrorProps } from "../wrapper/error";
 
 type Item = {
 	id: number,
@@ -33,21 +35,22 @@ type ListItem = {
 }
 
 
-export const List = ({ setLoading, setAlert, page, size, setTotal }: LoadingProps & AlertProps & PaginationProps) => {
+export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProps & PaginationProps & ErrorProps) => {
 	const [orgs, setOrgs] = useState<ResponseList<ListItem>>();
 	const nav = useNavigate();
 
 	const del = async (id: number) => {
 		setLoading!(true);
 		delete_(`/organizations/${id}`).then(() => {
-			setAlert!({ type: "success", message: "success delete" });
+			// setAlert!({ type: "success", message: "success delete" });
 		}).catch((reason) => {
-			setAlert!({ type: "error", message: reason });
+			// setAlert!({ type: "error", message: reason });
+			setError(reason);
 		}).finally(() => {
 			setLoading!(false);
-			setTimeout(() => {
-				setAlert!(null);
-			}, 2000);
+			// setTimeout(() => {
+			// 	setAlert!(null);
+			// }, 2000);
 		})
 	}
 
@@ -90,8 +93,9 @@ export const List = ({ setLoading, setAlert, page, size, setTotal }: LoadingProp
 			setOrgs(res);
 			setTotal!(res.total);
 		}).catch(reason => {
-			setAlert({ message: `${reason}`, type: "error" });
-			setTimeout(() => { setAlert!(null) }, 2000);
+			// setAlert({ message: `${reason}`, type: "error" });
+			// setTimeout(() => { setAlert!(null) }, 2000);
+			setError(reason);
 		}).finally(() => {
 			setLoading(false);
 		});

@@ -10,6 +10,7 @@ import { LoadingWrapper, LoadingProps } from "../wrapper/spin";
 import { PaginationWrapper } from "../wrapper/pagination";
 import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
+import { ErrorWrapper } from "../wrapper/error";
 
 
 // const List = () => {
@@ -109,7 +110,7 @@ import { AlertProps, AlertWrapper } from "../wrapper/alert";
 
 // }
 
-const List = PaginationWrapper(AlertWrapper(LoadingWrapper(OrganizationList)));
+const List = PaginationWrapper(ErrorWrapper(LoadingWrapper(OrganizationList)));
 
 const CreateOrganization = () => {
 	const nav = useNavigate();
