@@ -105,8 +105,10 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 		fetch();
 	}, [page, size]);
 
-	return <Table columns={columns} dataSource={orgs?.list} pagination={false}/>
-}
+	return <>
+		<Navbar />
+		<Table columns={columns} dataSource={orgs?.list} pagination={false}/>
+	</>}
 
 interface Organization {
 	name: string

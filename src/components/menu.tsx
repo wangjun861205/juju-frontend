@@ -1,9 +1,9 @@
-import React, { ReactNode, useState } from "react"
+import React, { ReactNode, useState, ReactElement } from "react"
 
 
-export const Menu = <P extends object>({children, curr}: React.PropsWithChildren<P> & {curr: ReactNode }) => {
-    const [isOpen, setOpen] = useState();
-    return <>
+export const Menu = <P extends object>({children, curr, ...other}: React.PropsWithChildren<P> & {curr: ReactElement }) => {
+    const [isOpen, setOpen] = useState(false);
+    return <div {...other} onMouseEnter={() => { setOpen(true) }} onMouseLeave={() => { setOpen(false) }}>
         { children === null && {curr} || <>{ curr } { isOpen && children }</>}
-    </>
+    </div>
 }
