@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { ErrForbidden } from "../errors";
 
 export class HttpError extends Error {
 	status: number;
@@ -14,9 +15,12 @@ export class HttpError extends Error {
 export const get = async <T extends {}>(url: string, atta?: { params?: any, onForbidden?: () => void }): Promise<T> => {
 	url = atta?.params ? url + "?" + new URLSearchParams(atta.params) : url;
 	const resp = await fetch(url);
-	if (resp.status === 401 && atta?.onForbidden) {
-		atta?.onForbidden();
-		throw new HttpError(resp.status, resp.statusText);
+	if (resp.status === 401) {
+		if (atta?.onForbidden) {
+			atta.onForbidden()
+		}
+		// throw new HttpError(resp.status, resp.statusText);
+		throw ErrForbidden;
 	}
 	if (resp.status / 100 > 3) {
 		throw new HttpError(resp.status, resp.statusText);
@@ -32,6 +36,9 @@ export const post = async <T extends {}>(url: string, atta?: { params?: any, bod
 		headers: atta?.body && { "Content-Type": "application/json" },
 		body: atta?.body && JSON.stringify(atta.body),
 	});
+	if (resp.status === 401) {
+		throw ErrForbidden;
+	}
 	if (resp.status / 100 > 3) {
 		throw new HttpError(resp.status, resp.statusText);
 	}
@@ -45,6 +52,9 @@ export const put = async <T extends {}>(url: string, atta?: { params?: any, body
 		headers: atta?.body && { "Content-Type": "application/json" },
 		body: atta?.body && JSON.stringify(atta.body)
 	});
+	if (resp.status === 401) {
+		throw ErrForbidden;
+	}
 	if (resp.status / 100 > 3) {
 		throw new HttpError(resp.status, resp.statusText);
 	}
@@ -56,6 +66,9 @@ export const delete_ = async <T extends {}>(url: string, atta?: { params?: any }
 	const resp = await fetch(url, {
 		method: "DELETE",
 	});
+	if (resp.status === 401) {
+		throw ErrForbidden;
+	}
 	if (resp.status / 100 > 3) {
 		throw new HttpError(resp.status, resp.statusText);
 	}

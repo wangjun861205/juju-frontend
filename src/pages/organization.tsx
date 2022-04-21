@@ -10,20 +10,14 @@ import { LoadingWrapper, LoadingProps } from "../wrapper/spin";
 import { PaginationWrapper, PaginationProps } from "../wrapper/pagination";
 import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
+import { ErrorWrapper } from "../wrapper/error";
 
 
 
-const List = PaginationWrapper(AlertWrapper(LoadingWrapper((props: PaginationProps & AlertProps & LoadingProps) => {
-	const nav = useNavigate();
-	return <>
-		<Button onClick={() => nav("/organizations/create")} >Create</Button>
-		<OrganizationList {...props} />
-	</>
-})));
 
-const Create = AlertWrapper(LoadingWrapper(OrganizationCreate));
+const List = PaginationWrapper(ErrorWrapper(LoadingWrapper(OrganizationList)));
 
-const CreateOrganization = () => {
+const Create = () => {
 	const nav = useNavigate();
 	const [data, setData] = useState({ name: "" });
 	const doRequest = async () => {
