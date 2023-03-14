@@ -107,7 +107,13 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 
 	return <>
 		<Navbar />
-		<Table columns={columns} dataSource={orgs?.list} pagination={false}/>
+		<Table columns={columns} dataSource={orgs?.list} pagination={false} onRow={(data) => {
+			return {
+				onClick: () => {
+					nav(`/organizations/${data.id}`)
+				}
+			}
+		}}/>
 	</>}
 
 interface Organization {
