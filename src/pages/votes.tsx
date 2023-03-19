@@ -17,6 +17,7 @@ import { DatePicker } from "antd";
 import { U as DateRangeUpdate } from "../components/date";
 import { Detail as CVoteDetail, Update as CVoteUpdate } from "../components/vote";
 import { Report as DateReport } from "../components/date";
+import { Filling as FillingComponent} from "../components/questions"
 
 
 export type Vote = {
@@ -107,7 +108,10 @@ export const VoteList = () => {
 			dataIndex: "",
 			key: "",
 			render: (record: { id: number }) => {
-				return <Button onClick={(event) => { event.stopPropagation(); nav(`/organizations/${organization_id}/votes/${record.id}/update`) }}>Update</Button>
+				return <>
+				<Button onClick={(event) => { event.stopPropagation(); nav(`/organizations/${organization_id}/votes/${record.id}/update`) }}>Update</Button>
+				<Button onClick={() => { nav(`/votes/${record.id}/filling`)}}>Filling</Button>
+				</>
 			}
 		}
 
@@ -131,6 +135,7 @@ export const Detail = () => {
 
 
 	return <div>
+		<Button onClick={() => {nav(-1)}}>Back</Button>
 		<CVoteDetail id={vote_id!} />
 		<DateRangeUpdate vote_id={vote_id!} />
 		<Button onClick={() => { nav(`/votes/${vote_id}/questions/create`) }}>Add Question</Button>
@@ -141,7 +146,11 @@ export const Detail = () => {
 
 export const Update = () => {
 	const { vote_id } = useParams();
-	return <CVoteUpdate id={vote_id!} />
+	const nav = useNavigate();
+	return <div>
+		<Button onClick={() => nav(-1)}>Back</Button>
+		<CVoteUpdate id={vote_id!} />
+		</div>
 }
 
 export const Report = () => {
@@ -152,9 +161,17 @@ export const Report = () => {
 		get<_Report[]>(`/votes/${vote_id}/questions/report`, { onForbidden: () => { nav("/login") } }).then(r => setQuestionReport(r)).catch(reason => console.log(reason));
 	}, [])
 	return <div>
+		<Button onClick={() => {nav(-1)}}>Back</Button>
 		<DateReport vote_id={vote_id!} />
 		{questionReport.map(r => <QuestionReport report={r} />)}
 	</div>
 
 
+}
+
+
+export const Filling = () => {
+	return <div>
+		<FillingComponent question_id={9} />
+	</div>
 }

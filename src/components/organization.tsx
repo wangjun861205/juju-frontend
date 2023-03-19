@@ -105,8 +105,13 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 		fetch();
 	}, [page, size]);
 
+	const create = () => {
+		nav('/organizations/create');
+	}
+
 	return <>
 		<Navbar />
+		<Button onClick={create}>Create</Button>
 		<Table columns={columns} dataSource={orgs?.list} pagination={false} onRow={(data) => {
 			return {
 				onClick: () => {

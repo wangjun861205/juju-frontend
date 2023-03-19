@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
-import { Button, Input, Select, Table } from "antd";
+import { Button, Checkbox, Input, message, Radio, Row, Select, Table } from "antd";
 import { useNavigate } from "react-router";
 import "antd/dist/antd.css";
+import { RadioGroup } from "@material-ui/core";
 
 type Item = {
 	id: number,
@@ -148,5 +149,59 @@ export const Report = ({ report }: { report: _Report }) => {
 		{report.options.map(o => {
 			return <li><span>{o.option}</span><span>{o.percentage / 100}%</span></li>
 		})}
+	</div>
+}
+
+export type FillingProps = {
+	question_id: number,
+}
+
+enum QuestionType {
+	SINGLE = 'Single',
+	MULTI = 'Multi'
+}
+
+type Option = {
+	id: number,
+	option: String,
+}
+
+type Question = {
+	id: number,
+	description: String,
+	type_: QuestionType,
+	opts: Option[],
+}
+
+export const Filling = ({question_id}: FillingProps) => {
+	const [question, setQuestion] = useState<Question|null>(null);
+	const nav = useNavigate();
+	const fetch_data = async () => {
+			let res = await fetch(`/questions/${question_id}`);
+			if (res.status !== 200) {
+				throw res.body;
+			}
+			try {
+				let q = await res.json();
+				return q
+			} catch(e) {
+				throw e;
+			}
+	}
+	useEffect(() => {
+		fetch_data().then(q => {
+			setQuestion(q);
+		}).catch(e => message.error(e));
+	}, [])
+	return <div>
+		<Row>ID: { question?.id }</Row>
+		<Row>Description: { question?.description }</Row>
+		<Row>Type: { question?.type_ }</Row>
+		<Row>Options:</Row>
+		<Radio.Group>
+			{ question?.opts.map(o => {
+				return question?.type_ === QuestionType.SINGLE ? <Row><Radio value={o.id}>{o.option}</Radio></Row> : <Checkbox value={o.id}>{o.option}</Checkbox>
+			})}
+		</Radio.Group>
 	</div>
 }

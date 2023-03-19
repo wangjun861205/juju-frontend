@@ -1,6 +1,7 @@
 import { Input, Button, Alert } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import "./login.css";
 
 const Login = () => {
 	const [data, setData] = useState({
@@ -26,11 +27,16 @@ const Login = () => {
 		nav("/");
 	}
 
-	return <div>
-		{alert !== "" && <Alert message={alert} type="error" banner={true} closable={true} />}
-		<Input placeholder="Username..." onChange={(e) => { setData({ ...data, username: e.target.value }) }} />
-		<Input type="password" placeholder="Password..." onChange={(e) => { setData({ ...data, password: e.target.value }) }} />
-		<Button onClick={() => { login().then().catch((e) => { console.log(e) }) }}>Login</Button>
+	return <div className="LoginWrap">
+		<div className="Login">
+			{alert !== "" && <Alert message={alert} type="error" banner={true} closable={true} />}
+			<Input placeholder="Username..." onChange={(e) => { setData({ ...data, username: e.target.value }) }} />
+			<Input type="password" placeholder="Password..." onChange={(e) => { setData({ ...data, password: e.target.value }) }} />
+			<div className="ButtonRow">
+				<Button onClick={() => { login().then().catch((e) => { console.log(e) }) }}>Login</Button>
+				<Button onClick={() => { nav("/signup") }}>Signup</Button>
+			</div>
+		</div>
 	</div>
 }
 

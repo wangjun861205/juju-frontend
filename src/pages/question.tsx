@@ -1,6 +1,6 @@
 import { Input, Button, Alert, Modal, Select, Table } from "antd";
 import { useEffect, useState, useReducer } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Alert as AlertModel } from "../models/alert";
 import { Detail as QuestionDetail } from "../models/question";
 import { Create as OptCreate, Item as OptItem } from "../models/opt";
@@ -17,6 +17,7 @@ export const Create = () => {
 	const { vote_id } = useParams();
 	const [question, setQuestion] = useState<{ description: string, type_: "Single" | "Multi" }>({ description: "", type_: "Single" });
 	const [options, setOptions] = useState<string[]>([]);
+	const navigate = useNavigate();
 	const create = async () => {
 		const res = await fetch(`/votes/${vote_id}/questions`, {
 			method: "POST",
@@ -29,6 +30,7 @@ export const Create = () => {
 	}
 
 	return <div>
+		<Button onClick={() => {navigate(-1)}}>Back</Button>
 		<QuestionCreate onError={(err: Error) => { console.log(err) }} question={question} setQuestion={setQuestion} />
 		<OptionCreate onError={(err: Error) => { console.log(err) }} options={options} setOptions={setOptions} />
 		<Button onClick={create}>Create</Button>
@@ -40,6 +42,7 @@ export const Create = () => {
 export const Detail = () => {
 	const { question_id } = useParams();
 	const [data, setData] = useState<{ alert: AlertModel | undefined, question: QuestionDetail | undefined, modalVisible: boolean, newOpts: OptCreate[] }>({ alert: undefined, question: undefined, modalVisible: false, newOpts: [] });
+	const navigate = useNavigate();
 	const addOpts = async () => {
 		const res = await fetch(`/questions/${question_id}/options`, {
 			method: "POST",
@@ -63,6 +66,7 @@ export const Detail = () => {
 	}, [])
 
 	return <div>
+		<Button onClick={() => {navigate(-1)}}>Back</Button>
 		<CQuestionDetail question_id={question_id!} />
 		<COptionList question_id={question_id!} />
 

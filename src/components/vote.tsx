@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Input, Button, Table, DatePicker } from "antd";
+import { Input, Button, Table, DatePicker, message } from "antd";
 import { get, ListResponse, delete_, DeleteResponse, Pagination, put, UpdateResponse } from "../utils/api";
 import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
@@ -100,6 +100,7 @@ export const List = ({ organization_id }: { organization_id: string }) => {
 					<Button onClick={(event) => { event.stopPropagation(); nav(`/votes/${id}/update/`) }}>Update</Button>
 					<Button onClick={(event) => { event.stopPropagation(); remove(id, i) }}>Delete</Button>
 					<Button onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/report`) }}>View Report</Button>
+					<Button onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/filling`) }}>Filling</Button>
 				</div >
 			}
 		}
@@ -128,12 +129,13 @@ type Updation = {
 
 export const Update = ({ id }: { id: string }) => {
 	const [data, setData] = useState<Updation>({ name: "", deadline: null, status: "Collecting" });
+	const nav = useNavigate();
 	useEffect(() => {
 		get<Updation>(`/votes/${id}`).then(res => setData(res)).catch(e => { throw e });
 	}, [id])
 
 	const update = () => {
-		put<UpdateResponse>(`/votes/${id}`, { body: data }).then(res => console.log(res)).catch(e => { throw e });
+		put<UpdateResponse>(`/votes/${id}`, { body: data }).then(res => { message.success("Successfully updated"); nav(-1)}).catch(e => { throw e });
 	}
 
 	return <div>

@@ -115,6 +115,7 @@ const AddUsers = () => {
 	const [total, setTotal] = useState(0);
 	const [adds, setAdds] = useState<number[]>([]);
 	const isInitialRender = useRef(true);
+	const navigate = useNavigate();
 
 
 	const search = () => {
@@ -163,6 +164,7 @@ const AddUsers = () => {
 	]
 
 	return <div>
+		<Button onClick={() => {navigate(-1)}}>Back</Button>
 		<h1>{org?.name || ""}</h1>
 		<Input placeholder="Phone" onChange={(e) => { setPhone(e.target.value) }} />
 		<Button onClick={search}>Search</Button>
