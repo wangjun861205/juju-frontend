@@ -1,6 +1,6 @@
 import Calendar from "../components/calendar"
-import { Input, Button, Alert, Table, Pagination, Select } from "antd";
-import { useState, useEffect } from "react";
+import { Input, Button, Alert, Table, Pagination, Select, message } from "antd";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Detail as VoteDetail } from "../models/vote";
 import { Alert as AlertModel } from "../models/alert";
@@ -10,7 +10,7 @@ import {
 } from '@material-ui/pickers';
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
-import { get, post } from "../utils/api";
+import { get, post, fetch_list } from "../utils/api";
 import { _Report, Report as QuestionReport, List as CQuestionList } from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
@@ -169,9 +169,49 @@ export const Report = () => {
 
 }
 
-
 export const Filling = () => {
+	const { vote_id } = useParams();
+	const nav = useNavigate();
+	const [questions, setQuestions] = useState<{id: number}[]>([]);
+	const [answers, setAnswers] = useState<number[][]>([]);
+	const [currIdx, setCurrIdx] = useState(-1);
+	const setValue = useCallback((vals: number[]) => {
+		setAnswers(old => {
+			old[currIdx] = vals;
+			return old
+		});
+	}, [currIdx]);
+	type Response = {
+		list: {id: number}[],
+	}
+	const fetchQuestions = async () => {
+		const res = await fetch(`/votes/${vote_id}/questions`);
+		switch (res.status) {
+			case 401:
+				nav(`/organizations`);
+				throw new Error('unauthorized');
+			case 200:
+				const {list}: Response = await res.json();
+				return list;
+			default:
+				throw new Error(await res.text());
+		}
+	}
+
+	useEffect(() => {
+		fetchQuestions().then(list => setQuestions(list)).catch(e => message.error(e));
+	}, [])
+
+	useEffect(() => {
+		if (!questions) {
+			nav(-1);
+			return
+		}
+		setAnswers(new Array(questions.length));
+		setCurrIdx(0);
+	}, [questions])
+
 	return <div>
-		<FillingComponent question_id={9} />
+		<FillingComponent questionID={questions[currIdx].id} setValue={setValue}/>
 	</div>
 }

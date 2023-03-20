@@ -3,13 +3,21 @@ import { ErrForbidden } from "../errors";
 
 export class HttpError extends Error {
 	status: number;
-	statusText: string;
+	text: string;
 
-	constructor(status: number, statusText: string) {
-		super(`invalid http response status: ${statusText}(${status})`);
+	constructor(status: number, text: string) {
+		super(`invalid http response status(${status}): ${text}`);
 		this.status = status;
-		this.statusText = statusText;
+		this.text = text;
 	}
+}
+ 
+export const fetch_list = async <T,>(url: string): Promise<{list: T[], total: number}> => {
+	let res = await fetch(url);
+	if (res.status !== 200) {
+		throw new HttpError(res.status, await res.text());
+	}
+	return res.json()
 }
 
 export const get = async <T extends {}>(url: string, atta?: { params?: any, onForbidden?: () => void }): Promise<T> => {

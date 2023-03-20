@@ -153,7 +153,8 @@ export const Report = ({ report }: { report: _Report }) => {
 }
 
 export type FillingProps = {
-	question_id: number,
+	questionID: number,
+	setValue: (val: number[]) => void,
 }
 
 enum QuestionType {
@@ -173,11 +174,11 @@ type Question = {
 	opts: Option[],
 }
 
-export const Filling = ({question_id}: FillingProps) => {
+export const Filling = ({questionID, setValue}: FillingProps) => {
 	const [question, setQuestion] = useState<Question|null>(null);
 	const nav = useNavigate();
 	const fetch_data = async () => {
-			let res = await fetch(`/questions/${question_id}`);
+			let res = await fetch(`/questions/${questionID}`);
 			if (res.status !== 200) {
 				throw res.body;
 			}
