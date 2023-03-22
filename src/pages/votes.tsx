@@ -165,53 +165,74 @@ export const Report = () => {
 		<DateReport vote_id={vote_id!} />
 		{questionReport.map(r => <QuestionReport report={r} />)}
 	</div>
-
-
 }
 
 export const Filling = () => {
 	const { vote_id } = useParams();
 	const nav = useNavigate();
-	const [questions, setQuestions] = useState<{id: number}[]>([]);
+	const [questionIDs, setQuestionIDs] = useState<number[]>([]);
 	const [answers, setAnswers] = useState<number[][]>([]);
 	const [currIdx, setCurrIdx] = useState(-1);
+	const [currID, setCurrID] = useState(0);
 	const setValue = useCallback((vals: number[]) => {
 		setAnswers(old => {
 			old[currIdx] = vals;
 			return old
 		});
 	}, [currIdx]);
-	type Response = {
-		list: {id: number}[],
-	}
-	const fetchQuestions = async () => {
+	const fetchQuestionIDs = async () => {
 		const res = await fetch(`/votes/${vote_id}/questions`);
 		switch (res.status) {
 			case 401:
 				nav(`/organizations`);
 				throw new Error('unauthorized');
 			case 200:
-				const {list}: Response = await res.json();
-				return list;
+				const {list}: {list: {id: number}[]} = await res.json();
+				return list.map((q: {id: number}) => q.id);
 			default:
 				throw new Error(await res.text());
 		}
 	}
 
 	useEffect(() => {
-		fetchQuestions().then(list => setQuestions(list)).catch(e => message.error(e));
+		fetchQuestionIDs().then(ids => setQuestionIDs(ids)).catch(e => message.error(e));
 	}, [])
 
 	useEffect(() => {
-		if (!questions) {
+		if (!questionIDs) {
 			nav(-1);
 			return
 		}
-		setAnswers(new Array(questions.length));
+		setAnswers(new Array(questionIDs.length));
 		setCurrIdx(0);
-	}, [questions])
+	}, [questionIDs])
 
-	return <div>
-		<FillingComponent questionID={questions[currIdx].id} setValue={setValue}/>
-	</div>
+	useEffect(() => {
+		setCurrID(questionIDs[currIdx]);
+	}, [currIdx])
+
+	const prev = () => {
+		setCurrIdx((old) => {
+			if (old > 0) {
+				return old - 1;
+			}
+			return old;
+		});
+	}
+
+	const next = () => {
+			setCurrIdx((old) => {
+				if (old < questionIDs.length - 1) {
+					return old + 1;
+				}
+				return old;
+			});
+	}
+
+	return <>{ questionIDs.length > 0 
+		? <div>
+			<FillingComponent questionID={currID} setValue={setValue}/>
+			<Button disabled={currIdx == 0} onClick={prev}>Previous</Button><Button disabled={ currIdx == questionIDs.length - 1 } onClick={next}>Next</Button>
+		</div> 
+		: <div></div> }</>
 }

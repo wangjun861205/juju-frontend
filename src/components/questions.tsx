@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
-import { Button, Checkbox, Input, message, Radio, Row, Select, Table } from "antd";
+import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table } from "antd";
 import { useNavigate } from "react-router";
 import "antd/dist/antd.css";
 import { RadioGroup } from "@material-ui/core";
+import { CheckboxChangeEvent } from "antd/lib/checkbox";
 
 type Item = {
 	id: number,
@@ -176,6 +177,7 @@ type Question = {
 
 export const Filling = ({questionID, setValue}: FillingProps) => {
 	const [question, setQuestion] = useState<Question|null>(null);
+	const [answer, setAnswer] = useState<number[]>([]);
 	const nav = useNavigate();
 	const fetch_data = async () => {
 			let res = await fetch(`/questions/${questionID}`);
@@ -194,15 +196,35 @@ export const Filling = ({questionID, setValue}: FillingProps) => {
 			setQuestion(q);
 		}).catch(e => message.error(e));
 	}, [])
+	useEffect(() => {
+		setValue(answer);
+	}, [answer])
+
+	const radioOnChange = (e: RadioChangeEvent) => {
+		setAnswer([e.target.value]);
+	}
+
+	const checkboxOnChange = (e: CheckboxChangeEvent) => {
+		if (e.target.checked) {
+			setAnswer((old) => {
+				old.push(e.target.value);
+				return old;
+			});
+			return
+		}
+		setAnswer((old) => {
+			const i = old.indexOf(e.target.value);
+			old.splice(i, 1);
+			return old;
+		})
+	}
 	return <div>
 		<Row>ID: { question?.id }</Row>
 		<Row>Description: { question?.description }</Row>
 		<Row>Type: { question?.type_ }</Row>
 		<Row>Options:</Row>
-		<Radio.Group>
-			{ question?.opts.map(o => {
-				return question?.type_ === QuestionType.SINGLE ? <Row><Radio value={o.id}>{o.option}</Radio></Row> : <Checkbox value={o.id}>{o.option}</Checkbox>
-			})}
-		</Radio.Group>
+		{ question?.type_ === QuestionType.SINGLE 
+		? <Radio.Group> {question?.opts.map(o => { return <Row><Radio value={o.id} onChange={ radioOnChange }>{o.option}</Radio></Row> }) }</Radio.Group>
+		: <Checkbox.Group> { question?.opts.map(o => { return <Checkbox value={o.id} onChange={ checkboxOnChange }>{o.option}</Checkbox> }) }</Checkbox.Group>}
 	</div>
 }
