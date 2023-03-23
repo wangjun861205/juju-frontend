@@ -172,10 +172,12 @@ export const Filling = () => {
   const nav = useNavigate();
   const [questionIDs, setQuestionIDs] = useState<number[]>([]);
   const [answers, setAnswers] = useState<number[][]>([]);
-  const [currIdx, setCurrIdx] = useState(-1);
-  const [currID, setCurrID] = useState(0);
+  const [currIdx, setCurrIdx] = useState<number|null>(null);
   const setValue = useCallback((vals: number[]) => {
     setAnswers(old => {
+		if (!currIdx) {
+			return old;
+		}
       old[currIdx] = vals;
       return old
     });
@@ -188,7 +190,7 @@ export const Filling = () => {
         throw new Error('unauthorized');
       case 200:
         const { list }: { list: { id: number }[] } = await res.json();
-        return list.map((q: { id: number }) => q.id);
+        return list.map((q: { id: number }) => { return q.id });
       default:
         throw new Error(await res.text());
     }
@@ -207,12 +209,12 @@ export const Filling = () => {
     setCurrIdx(0);
   }, [questionIDs, nav])
 
-  useEffect(() => {
-    setCurrID(questionIDs[currIdx]);
-  }, [currIdx, questionIDs])
 
   const prev = () => {
     setCurrIdx((old) => {
+		if (old === null) {
+			return old;
+		}
       if (old > 0) {
         return old - 1;
       }
@@ -222,6 +224,9 @@ export const Filling = () => {
 
   const next = () => {
     setCurrIdx((old) => {
+		if (old === null) {
+			return old;
+		}
       if (old < questionIDs.length - 1) {
         return old + 1;
       }
@@ -229,9 +234,9 @@ export const Filling = () => {
     });
   }
 
-  return <>{questionIDs.length > 0
+  return <>{questionIDs.length > 0  && currIdx !== null
     ? <div>
-      <FillingComponent questionID={currID} setValue={setValue} />
+      <FillingComponent questionID={questionIDs[currIdx]} setValue={setValue} />
       <Button disabled={currIdx === 0} onClick={prev}>Previous</Button><Button disabled={currIdx === questionIDs.length - 1} onClick={next}>Next</Button>
     </div>
     : <div></div>}</>

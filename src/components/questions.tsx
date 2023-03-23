@@ -195,7 +195,7 @@ export const Filling = ({questionID, setValue}: FillingProps) => {
 		fetch_data().then(q => {
 			setQuestion(q);
 		}).catch(e => message.error(e));
-	}, [])
+	}, [questionID])
 	useEffect(() => {
 		setValue(answer);
 	}, [answer])
