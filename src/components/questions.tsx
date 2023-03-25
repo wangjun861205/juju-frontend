@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
 import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table } from "antd";
 import { useNavigate } from "react-router";
@@ -155,7 +155,8 @@ export const Report = ({ report }: { report: _Report }) => {
 
 export type FillingProps = {
 	questionID: number,
-	setValue: (val: number[]) => void,
+	setAnswer: (vals: number[]) => void,
+	answer?: number[],
 }
 
 enum QuestionType {
@@ -175,9 +176,10 @@ type Question = {
 	opts: Option[],
 }
 
-export const Filling = ({questionID, setValue}: FillingProps) => {
+export const Filling = ({questionID, setAnswer, answer}: FillingProps) => {
+	console.log(`passed answer: ${answer}`)
 	const [question, setQuestion] = useState<Question|null>(null);
-	const [answer, setAnswer] = useState<number[]>([]);
+	const [selected, setSelected] = useState<number[]>([]);
 	const nav = useNavigate();
 	const fetch_data = async () => {
 			let res = await fetch(`/questions/${questionID}`);
@@ -192,30 +194,34 @@ export const Filling = ({questionID, setValue}: FillingProps) => {
 			}
 	}
 	useEffect(() => {
+		console.log(`question id: ${questionID}`)
 		fetch_data().then(q => {
 			setQuestion(q);
+			if (answer) setSelected(answer);
 		}).catch(e => message.error(e));
 	}, [questionID])
+
 	useEffect(() => {
-		setValue(answer);
-	}, [answer])
+		setAnswer(selected);
+	}, [selected])
+
 
 	const radioOnChange = (e: RadioChangeEvent) => {
-		setAnswer([e.target.value]);
+		setSelected([e.target.value]);
 	}
 
 	const checkboxOnChange = (e: CheckboxChangeEvent) => {
 		if (e.target.checked) {
-			setAnswer((old) => {
-				old.push(e.target.value);
-				return old;
-			});
+			setSelected((old) => {
+				old.push(e.target.value!);
+				return Array.from(old);
+			})
 			return
 		}
-		setAnswer((old) => {
+		setSelected((old) => {
 			const i = old.indexOf(e.target.value);
 			old.splice(i, 1);
-			return old;
+			return Array.from(old);
 		})
 	}
 	return <div>
@@ -224,7 +230,16 @@ export const Filling = ({questionID, setValue}: FillingProps) => {
 		<Row>Type: { question?.type_ }</Row>
 		<Row>Options:</Row>
 		{ question?.type_ === QuestionType.SINGLE 
-		? <Radio.Group> {question?.opts.map(o => { return <Row><Radio value={o.id} onChange={ radioOnChange }>{o.option}</Radio></Row> }) }</Radio.Group>
-		: <Checkbox.Group> { question?.opts.map(o => { return <Checkbox value={o.id} onChange={ checkboxOnChange }>{o.option}</Checkbox> }) }</Checkbox.Group>}
+		? <Radio.Group value={selected[0]}> {question?.opts.map(o => { 
+			console.log(`option id: ${o.id}, answer: ${answer}`);
+			return <Row>
+				<Radio value={o.id} onChange={ radioOnChange }>{o.option}</Radio>
+				</Row> }) }
+			</Radio.Group>
+		: <Checkbox.Group>{ question?.opts.map(o => { 
+				return <Row>
+					<Checkbox value={o.id} checked={ answer ? answer.indexOf(o.id) >= 0 : false } onChange={ checkboxOnChange }>{o.option}</Checkbox> 
+					</Row>}) }
+			</Checkbox.Group>}
 	</div>
 }
