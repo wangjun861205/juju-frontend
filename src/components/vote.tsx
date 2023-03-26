@@ -232,13 +232,10 @@ export const Filling = ({ id }: { id: number }) => {
 
 	const next = () => {
 		setIdx((old) => {
-			if (old === null) {
+			if (old === undefined) {
 				return old;
 			}
-			if (old! < questions!.length - 1) {
-				return old! + 1;
-			}
-			return old;
+			return old + 1;
 		});
 	}
 
@@ -267,8 +264,8 @@ export const Filling = ({ id }: { id: number }) => {
 				</Checkbox.Group>
 			}
 			<Row>
-				<Button disabled={idx === 0} onClick={prev}>Previous</Button>
-				<Button disabled={idx === questions.length - 1} onClick={next}>Next</Button>
+				{ idx > 0 ? <Button onClick={prev}>Previous</Button> : <></> }
+				{ idx < questions.length - 1? <Button onClick={next}>Next</Button> : <Button>Submit</Button> }
 			</Row>
 		</div>
 	  : <></>
