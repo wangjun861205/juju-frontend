@@ -239,6 +239,10 @@ export const Filling = ({ id }: { id: number }) => {
 		});
 	}
 
+	const submit = () => {
+		fetch(`/`)
+	}
+
 
 	return <>
 	{ questions && answers && idx !== undefined
