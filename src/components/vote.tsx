@@ -240,7 +240,40 @@ export const Filling = ({ id }: { id: number }) => {
 	}
 
 	const submit = () => {
-		fetch(`/`)
+		if (answers?.some(v => v === undefined)) {
+			message.warning("Please answer all questions");
+			return
+		}
+		fetch(
+			`/votes/${id}/answers`, 
+			{
+				method: "POST", 
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(answers?.map((v, i) => { return { question_id: questions![i].id, option_ids: answers[i] } }))
+			}
+		)
+		.then(res => {
+			switch (res.status) {
+				case 401:
+					message.error("not logined");
+					nav("/login");
+					return
+				case 201:
+					message.success("submit answers successfully");
+					nav(-1);
+					return
+				default:
+					res.text().then(e => {
+						message.error(e);
+						nav(-1);
+					}).catch(e => {
+						message.error(e);
+						nav(-1);
+					})
+			}
+		})
 	}
 
 
@@ -269,7 +302,7 @@ export const Filling = ({ id }: { id: number }) => {
 			}
 			<Row>
 				{ idx > 0 ? <Button onClick={prev}>Previous</Button> : <></> }
-				{ idx < questions.length - 1? <Button onClick={next}>Next</Button> : <Button>Submit</Button> }
+				{ idx < questions.length - 1? <Button onClick={next}>Next</Button> : <Button onClick={submit}>Submit</Button> }
 			</Row>
 		</div>
 	  : <></>
