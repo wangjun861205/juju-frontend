@@ -211,7 +211,14 @@ export const Filling = ({ id }: { id: number }) => {
 	const multiOnChange = (e: CheckboxChangeEvent) => {
 		setAnswers(old => {
 			if (old && idx !== undefined) {
-				old[idx].push(e.target.value);
+				console.log(`is checked: ${e.target.checked}, value: ${e.target.value}`)
+				if (e.target.checked) {
+					old[idx].push(e.target.value);
+					console.log(old);
+					return Array.from(old);
+				}
+				console.log(old);
+				old[idx] = old[idx].filter(v => v !== e.target.value);
 				return Array.from(old);
 			}
 			return old;
