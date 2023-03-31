@@ -5,5 +5,5 @@ export type Answer = {
 }
 
 export type Create = {
-  option_id: number,
+  option_ids: number[],
 }

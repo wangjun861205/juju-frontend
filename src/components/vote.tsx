@@ -4,6 +4,8 @@ import { get, ListResponse, delete_, DeleteResponse, Pagination, put, UpdateResp
 import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
+import { question_ids_within_vote } from "../apis/question";
+import { Filling as FillingComponent } from "../components/questions";
 
 enum Status {
 	Closed,
@@ -163,70 +165,32 @@ type QuestionWithOptions = {
 }
 
 export const Filling = ({ id }: { id: number }) => {
-	const [questions, setQuestions] = useState<QuestionWithOptions[]>();
-	const [answers, setAnswers] = useState<number[][]>();
-	const [idx, setIdx] = useState<number>();
+	const [question_ids, set_question_ids] = useState<number[]>();
+	const [idx, set_idx] = useState<number>();
 	const nav = useNavigate();
 	useEffect(() => {
-		fetch(`/votes/${id}/questions_with_options`).then(res => {
-			if (res.status !== 200) {
-				res.text().then(v => {
-					message.error(v);
-					nav(-1);
-				}).catch(e => {
-					message.error(e);
-					nav(-1);
-				});
+		question_ids_within_vote(id)
+		.then(ids => { 
+			if (!ids) {
+				message.error('empty vote');
+				nav(-1);
 				return;
 			}
-			res.json().then((v: ListResponse<QuestionWithOptions>) => {
-				console.log(v);
-				setQuestions(v.list);
-			}).catch(e => {
-				message.error(e);
-				nav(-1);
-				return
-			});
+			set_question_ids(ids);
 		})
-	}, [])
+		.catch(e => {
+			message.error(e);
+			nav(-1);
+		})
+	}, [id])
 
 	useEffect(() => {
-		if (questions) { 
-			setAnswers(questions.map(q => [q.opts[0].id]));
-			setIdx(0);
-		}
-	}, [questions])
+		set_idx(0);
+	}, [question_ids]);
 
-
-	const singleOnChange = (e: RadioChangeEvent) => {
-		setAnswers(old => {
-			if (old && idx !== undefined) {
-				old[idx] = [e.target.value];
-				return Array.from(old);
-			}
-			return old;
-		})
-	}
-
-	const multiOnChange = (e: CheckboxChangeEvent) => {
-		setAnswers(old => {
-			if (old && idx !== undefined) {
-				console.log(`is checked: ${e.target.checked}, value: ${e.target.value}`)
-				if (e.target.checked) {
-					old[idx].push(e.target.value);
-					console.log(old);
-					return Array.from(old);
-				}
-				console.log(old);
-				old[idx] = old[idx].filter(v => v !== e.target.value);
-				return Array.from(old);
-			}
-			return old;
-		})
-	}
 
 	const prev = () => {
-		setIdx((old) => {
+		set_idx((old) => {
 			if (old === null) {
 				return old;
 			}
@@ -238,7 +202,7 @@ export const Filling = ({ id }: { id: number }) => {
 	}
 
 	const next = () => {
-		setIdx((old) => {
+		set_idx((old) => {
 			if (old === undefined) {
 				return old;
 			}
@@ -246,70 +210,15 @@ export const Filling = ({ id }: { id: number }) => {
 		});
 	}
 
-	const submit = () => {
-		if (answers?.some(v => v === undefined)) {
-			message.warning("Please answer all questions");
-			return
-		}
-		fetch(
-			`/votes/${id}/answers`, 
-			{
-				method: "POST", 
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify(answers?.map((v, i) => { return { question_id: questions![i].id, option_ids: answers[i] } }))
-			}
-		)
-		.then(res => {
-			switch (res.status) {
-				case 401:
-					message.error("not logined");
-					nav("/login");
-					return
-				case 201:
-					message.success("submit answers successfully");
-					nav(-1);
-					return
-				default:
-					res.text().then(e => {
-						message.error(e);
-						nav(-1);
-					}).catch(e => {
-						message.error(e);
-						nav(-1);
-					})
-			}
-		})
-	}
 
 
 	return <>
-	{ questions && answers && idx !== undefined
+	{ question_ids && idx !== undefined
 	  ? <div>
-			<Row>ID: { questions[idx].id } </Row>
-			<Row>Description: {questions[idx].description }</Row>
-			<Row>Type: { questions[idx].type_ }</Row>
-			{ 
-				questions[idx].type_ === 'Single' 
-				? <Radio.Group value={ answers[idx][0] }>
-					{
-						questions[idx].opts.map(o => {
-								return <Row key={o.id}><Radio onChange={ singleOnChange } value={o.id}>{ o.option }</Radio></Row>
-						})
-					}
-					</Radio.Group>
-				: <Checkbox.Group value={ answers[idx] }>
-					{
-						questions[idx].opts.map(o => {
-								return <Row key={o.id}><Checkbox onChange={ multiOnChange } value={o.id}>{ o.option }</Checkbox></Row>
-						})
-					}
-				</Checkbox.Group>
-			}
+			<FillingComponent question_id={question_ids[idx]} />
 			<Row>
 				{ idx > 0 ? <Button onClick={prev}>Previous</Button> : <></> }
-				{ idx < questions.length - 1? <Button onClick={next}>Next</Button> : <Button onClick={submit}>Submit</Button> }
+				{ idx < question_ids.length - 1? <Button onClick={next}>Next</Button> : <></> }
 			</Row>
 		</div>
 	  : <></>
