@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
 import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table } from "antd";
 import { useNavigate } from "react-router";

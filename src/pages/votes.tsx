@@ -1,6 +1,6 @@
 import Calendar from "../components/calendar"
 import { Input, Button, Alert, Table, Pagination, Select, message } from "antd";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Detail as VoteDetail } from "../models/vote";
 import { Alert as AlertModel } from "../models/alert";
@@ -15,9 +15,8 @@ import { _Report, Report as QuestionReport, List as CQuestionList } from "../com
 import { Moment } from "moment";
 import { DatePicker } from "antd";
 import { U as DateRangeUpdate } from "../components/date";
-import { Detail as CVoteDetail, Update as CVoteUpdate } from "../components/vote";
+import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
 import { Report as DateReport } from "../components/date";
-import { Filling as FillingComponent } from "../components/questions"
 
 
 export type Vote = {
@@ -172,14 +171,18 @@ export const Filling = () => {
   const nav = useNavigate();
   const [questionIDs, setQuestionIDs] = useState<number[]>([]);
   const [answers, setAnswers] = useState<number[][]>([]);
-  const [currIdx, setCurrIdx] = useState(-1);
-  const [currID, setCurrID] = useState(0);
+  const [currIdx, setCurrIdx] = useState<number|null>(null);
+
   const setValue = useCallback((vals: number[]) => {
     setAnswers(old => {
+      if (currIdx === null) {
+        return old;
+      }
       old[currIdx] = vals;
-      return old
+      return Array.from(old);
     });
   }, [currIdx]);
+
   const fetchQuestionIDs = async () => {
     const res = await fetch(`/votes/${vote_id}/questions`);
     switch (res.status) {
@@ -188,7 +191,7 @@ export const Filling = () => {
         throw new Error('unauthorized');
       case 200:
         const { list }: { list: { id: number }[] } = await res.json();
-        return list.map((q: { id: number }) => q.id);
+        return list.map((q: { id: number }) => { return q.id });
       default:
         throw new Error(await res.text());
     }
@@ -207,32 +210,12 @@ export const Filling = () => {
     setCurrIdx(0);
   }, [questionIDs, nav])
 
-  useEffect(() => {
-    setCurrID(questionIDs[currIdx]);
-  }, [currIdx, questionIDs])
 
-  const prev = () => {
-    setCurrIdx((old) => {
-      if (old > 0) {
-        return old - 1;
-      }
-      return old;
-    });
-  }
 
-  const next = () => {
-    setCurrIdx((old) => {
-      if (old < questionIDs.length - 1) {
-        return old + 1;
-      }
-      return old;
-    });
-  }
 
-  return <>{questionIDs.length > 0
+  return <>{questionIDs.length > 0 && currIdx !== null && answers && vote_id
     ? <div>
-      <FillingComponent questionID={currID} setValue={setValue} />
-      <Button disabled={currIdx === 0} onClick={prev}>Previous</Button><Button disabled={currIdx === questionIDs.length - 1} onClick={next}>Next</Button>
+      <FillingComponent id={parseInt(vote_id)}/>
     </div>
     : <div></div>}</>
 }
