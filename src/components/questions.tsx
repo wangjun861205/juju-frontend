@@ -12,6 +12,7 @@ import { Question } from "../models/question";
 import { question as fetch_question} from "../apis/question";
 import { options_within_question } from "../apis/options";
 import { answers_of_question, submit_answer } from "../apis/answer";
+import { debug } from "console";
 
 type Item = {
   id: number,
@@ -170,7 +171,7 @@ export type FillingProps = {
 
 export const Filling = ({ question_id }: FillingProps) => {
 
-  type _Question = Question & { options: Option[] } & { answer: AnswerCreate };
+  type _Question = Question & { options: Option[] } & { answer: number[] };
 
   const [question, setQuestion] = useState<_Question>();
 
@@ -182,7 +183,7 @@ export const Filling = ({ question_id }: FillingProps) => {
     const ans = await answers_of_question(question_id);
     setQuestion({
       options: opts,
-      answers: ans.map((a: {option_id: number}) => a.option_id),
+      answer: ans,
       ...q,
     });
   }
@@ -197,24 +198,25 @@ export const Filling = ({ question_id }: FillingProps) => {
   const radioOnChange = (e: RadioChangeEvent) => {
     setQuestion(q => {
       if (!q) throw new Error("question still be uninitiated");
-      if (q.answer.option_ids.length === 0) {
-        q.answer.option_ids.push(e.target.value);
+      if (q.answer.length === 0) {
+        q.answer.push(e.target.value);
         return {...q};
       }
-      q.answer.option_ids[0] = e.target.value;
-      return q;
+      q.answer[0] = e.target.value;
+      return {...q};
     })
   }
 
   const checkboxOnChange = (e: CheckboxChangeEvent) => {
     setQuestion(q => {
       if (!q) throw new Error("question still be uninitiated");
+      const answer = [...q.answer];
       if (e.target.checked) {
-        q.answer.option_ids.push(e.target.value);
-        return q;
+        answer.push(e.target.value);
+        return {...q, answer};
       }
-      q.answer.option_ids.splice(q.answer.option_ids.indexOf(e.target.value), 1);
-      return q
+      answer.splice(q.answer.indexOf(e.target.value), 1);
+      return {...q, answer};
     });
   }
   return <>{question ?
@@ -225,17 +227,17 @@ export const Filling = ({ question_id }: FillingProps) => {
       <Row>Version: {question.version}</Row>
       <Row>Options:</Row>
       {question.type_ === QuestionType.SINGLE
-        ? <Radio.Group value={question.answer?.option_ids[0]}> 
+        ? <Radio.Group value={question.answer?.[0]}> 
             {question?.options.map(o => { 
               return <Row><Radio value={o.id} onChange={radioOnChange}>{o.option}</Radio></Row> })
             }
           </Radio.Group>
-        : <Checkbox.Group value={question.answer.option_ids.map(o => o)}> 
+        : <Checkbox.Group value={question.answer}> 
             {question?.options.map(o => { 
               return <Checkbox value={o.id} onChange={checkboxOnChange}>{o.option}</Checkbox> 
             })}
           </Checkbox.Group>}
-      <Button onClick={() => submit_answer(question_id, question.answer).then(_=>message.success('submit answer successfully')).catch(e => message.error(e))}></Button>
+      <Button onClick={() => submit_answer(question_id, question.answer).then(_=>message.success('submit answer successfully')).catch(e => message.error(e))}>提交</Button>
     </div>
     : <></>}</>
 }
