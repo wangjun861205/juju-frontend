@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Item as OptItem } from "./opt";
+import { Option as OptItem } from "./opt";
 import { get, delete_ } from "../utils/api";
 import { Table, Button } from "antd";
 
@@ -11,7 +11,7 @@ export enum QuestionType {
 
 export type Question = {
   id: number,
-  description: String,
+  description: string,
   type_: QuestionType,
   version: number,
 }
@@ -24,6 +24,7 @@ export type ListItem = {
 
 export type Create = {
   description: string,
+  type_: QuestionType,
 }
 
 export type Detail = {
@@ -31,6 +32,11 @@ export type Detail = {
   description: string,
   type_: string,
   opts: OptItem[],
+}
+
+export type Update = {
+  description: string,
+  type_: QuestionType,
 }
 
 type Item = {

@@ -13,7 +13,7 @@ export const List = () => {
 	}
 	return <div>
 		{error && <Alert type="error" message={error} />}
-		<QuestionDetail question_id={question_id!} />
+		<QuestionDetail question_id={parseInt(question_id!)} />
 		<AnswerList onError={onError} question_id={question_id!} />
 	</div>
 }

@@ -13,6 +13,7 @@ import { question as fetch_question} from "../apis/question";
 import { options_within_question } from "../apis/options";
 import { answers_of_question, submit_answer } from "../apis/answer";
 import { debug } from "console";
+import { Create as QuestionCreateModel } from "../models/question";
 
 type Item = {
   id: number,
@@ -90,7 +91,7 @@ type QuestionDetail = {
   type_: "Single" | "Multi",
 }
 
-export const Detail = ({ question_id }: { question_id: string }) => {
+export const Detail = ({ question_id }: { question_id: number }) => {
   const [state, setState] = useState<QuestionDetail>();
   useEffect(() => {
     get<QuestionDetail>(`/questions/${question_id}`).then(resp => {
@@ -136,10 +137,36 @@ type QuestionCreate = {
   type_: "Single" | "Multi",
 }
 
-export const Create = (props: { onError: (err: Error) => void, question: QuestionCreate, setQuestion: (question: QuestionCreate) => void }) => {
+interface CreateProps {
+  question: QuestionCreateModel | undefined,
+  setQuestion: Dispatch<SetStateAction<QuestionCreateModel | undefined>>,
+}
+
+export const Create = ({question, setQuestion}: CreateProps) => {
   return <div>
-    <Input value={props.question.description} placeholder="Description" onChange={(event) => { props.setQuestion({ ...props.question, description: event.target.value }) }} />
-    <Select options={[{ label: "Single", value: "Single" }, { label: "Multi", value: "Multi" }]} value={props.question.type_} onChange={(value) => { props.setQuestion({ ...props.question, type_: value }) }} />
+    <Input 
+      value={question?.description} 
+      placeholder="Description" 
+      onChange={
+        (event) => { 
+          setQuestion(old => { 
+            if (!old) return old; 
+            return { ...old, description: event.target.value } 
+          }) 
+        }
+      } />
+    <Select 
+      options={
+        [
+          { label: "Single", value: QuestionType.SINGLE }, 
+          { label: "Multi", value: QuestionType.MULTI }
+        ]
+      } 
+      value={question?.type_} 
+      onChange={(value) => { setQuestion(old => { 
+        if (!old) return old;
+        return { ...old, type_: value}
+      }) }} />
   </div>
 
 }

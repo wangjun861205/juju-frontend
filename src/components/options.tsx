@@ -1,27 +1,42 @@
-import { useEffect, useState } from "react";
-import { delete_, get, post, put } from "../utils/api"
-import { List as AList, Button, Modal, Input, Radio, Checkbox } from "antd";
+import { useEffect, useState, useCallback, SetStateAction, Dispatch } from "react";
+import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table } from "antd";
 import Item from "antd/lib/list/Item";
+import { delete_option, options_within_question, add_options } from "../apis/options";
+import { Option } from "../models/opt";
+import { useNavigate } from "react-router";
 
+interface AddModalProps  {
+	visible: boolean,
+	options: string[],
+	setOptions: Dispatch<SetStateAction<string[]>>,
+	onOk: () => void,
+	onCancel: () => void,
+}
 
-export const AddModal = (props: { visible: boolean, onOk: (options: string[]) => void, onCancel: (options: string[]) => void, onError: (err: Error) => void }) => {
-	const [state, setState] = useState<string[]>([""]);
+export const AddModal = ({visible, options, setOptions, onOk, onCancel}: AddModalProps ) => {
 	const more = () => {
-		setState([...state, ""])
+		setOptions(old => { return [...old, ""] })
 	}
 
-	return <Modal visible={props.visible} onOk={() => { props.onOk([...state]); setState([""]); }} onCancel={() => { props.onCancel({ ...state }); setState([""]); }}>
+
+	return <Modal visible={visible} onOk={onOk} onCancel={ onCancel }>
 		<Button onClick={more}>More</Button>
-		{state.map((o, i) => {
-			return <div><Input style={{ display: "inline-block" }} value={o} onChange={(event) => {
-				const newState = [...state];
-				newState[i] = event.target.value;
-				setState(newState);
-			}} /><Button style={{ display: "inline-block" }} onClick={() => {
-				const newState = [...state];
-				newState.splice(i, 1);
-				setState(newState);
-			}}>Remove</Button>
+		{options.map((o, i) => {
+			return <div>
+				<Input value={o} onChange={(event) => {
+				setOptions(old => {
+					old[i] = event.target.value;
+					return [...old];
+				});
+				}} />
+				<Row>
+					<Button onClick={() => {
+					setOptions(old => {
+						old.splice(i, 1);
+						return [...old];
+					})
+					}}>Remove</Button>
+				</Row>
 			</div>
 		})}
 	</Modal>
@@ -41,76 +56,51 @@ type ListResponse = {
 
 
 
-export const List = ({ question_id }: { question_id: string }) => {
-	const [state, setState] = useState<ListResponse>({ question_type: "Single", items: [] });
-	const [visible, setVisible] = useState<boolean>(false);
-	const add = (options: string[]) => {
-		post(`/questions/${question_id}/options`, { body: options }).then(() => { setVisible(false) }).catch(reason => { throw reason });
-		setVisible(false);
-	}
-	const remove = (option_id: number, i: number) => {
-		delete_(`/options/${option_id}`).then(() => {
-			const newItems = [...state.items];
-			newItems.splice(i, 1);
-			setState({ ...state, items: newItems });
-		}).catch(reason => { throw reason })
+export const List = ({ question_id }: { question_id: number }) => {
+	const [refresh, setRefresh] = useState(0);
+	const [options, setOptions] = useState<Option[]>();
+	const nav = useNavigate();
+
+	const remove = (id: number) => {
+		delete_option(id)
+		.then(_ => setRefresh(o => Math.abs(o-1)) )
+		.catch(err => {
+			message.error(err);
+		})
 	}
 
-	const submit = () => {
-		put(`/questions/${question_id}/answers`, { body: state.items.filter(item => item.checked).map(item => item.id) }).then().catch(reason => { throw reason })
-	}
 	useEffect(() => {
-		get<ListResponse>(`/questions/${question_id}/options`).then(res => { setState(res) }).catch(reason => { throw reason });
-	}, [question_id])
+		options_within_question(question_id)
+		.then(opts => setOptions(opts))
+		.catch(err => {
+			message.error(err);
+			nav(-1);
+		})
+	}, [question_id, refresh])
 
 	return <div>
-		<Button onClick={() => { setVisible(!visible) }}>Add Option</Button>
-		<AddModal onOk={add} onCancel={() => { }} visible={visible} onError={(e) => { throw e }} />
-		<AList split={true}>
-			{state.question_type === "Single"
-				? state.items.map((o, i) => {
-					return <div>
-						<Radio checked={o.checked} onChange={(event) => {
-							const newItems = [...state.items].map(item => { return { ...item, checked: false } });
-							newItems[i].checked = event.target.checked;
-							setState({ ...state, items: newItems });
-						}}>{o.option}</Radio>
-						<Button onClick={() => { remove(o.id, i) }}>Remove</Button>
-					</div>
-				})
-				: state.items.map((o, i) => {
-					return <div>
-						<Checkbox checked={o.checked} onChange={(event) => {
-							const newItems = [...state.items];
-							newItems[i].checked = event.target.checked;
-							setState({ ...state, items: newItems });
-						}}>{o.option}</Checkbox>
-						<Button onClick={() => { remove(o.id, i) }}>Remove</Button>
-					</div>
-				})}
-		</AList >
-		<Button onClick={submit}>Submit</Button>
+		<Table columns={[
+			{
+				key: 'id',
+				title: 'ID',
+				dataIndex: 'id',
+			},
+			{
+				key: 'option',
+				title: 'Option',
+				dataIndex: 'option',
+			},
+			{
+				key: 'action',
+				title: 'Action',
+				render: (_, record) => {
+					return <Button onClick={() => remove(record.id) }>Delete</Button>;
+				}
+			}
+		]} dataSource={options}/>
 	</div >
 }
 
-export const Create = (props: { onError: (err: Error) => void, options: string[], setOptions: (options: string[]) => void }) => {
-	const [visible, setVisible] = useState<boolean>(false);
-	return <div>
-		<Button onClick={() => { setVisible(!visible) }}>Add Option</Button>
-		<AddModal onOk={(options: string[]) => { props.setOptions(props.options.concat(options)); setVisible(false); }} onCancel={() => { }} visible={visible} onError={props.onError} />
-		<AList split={true}>
-			{props.options.map((o, i) => {
-				return <div><span>{o}</span> <Button onClick={() => {
-					const newState = [...props.options];
-					newState.splice(i, 1);
-					props.setOptions(newState);
-				}}>Remove</Button></div>
-			})}
-		</AList>
-	</div>
-
-
-}
 
 export const SingleSelect = (props: { options: Item[], answer: number, setAnswer: (answer: number) => void, onError?: (err: Error) => void }) => {
 	return <div>

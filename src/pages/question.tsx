@@ -1,28 +1,34 @@
-import { Input, Button, Alert, Modal, Select, Table } from "antd";
+import { Input, Button, Alert, Modal, Select, Table, message } from "antd";
 import { useEffect, useState, useReducer } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Alert as AlertModel } from "../models/alert";
-import { Detail as QuestionDetail } from "../models/question";
-import { Create as OptCreate, Item as OptItem } from "../models/opt";
+import { Detail as QuestionDetail, Create as QuestionCreateModel, Question as QuestionModel, QuestionType} from "../models/question";
+import { Create as OptCreate, Option as OptItem } from "../models/opt";
 import { get, post, put, delete_ } from "../utils/api";
 import "antd/dist/antd.css";
 import { List as CQuestionList } from "../components/questions";
+import { AddModal, List as OptionList } from "../components/options";
 
-import { Create as QuestionCreate, Detail as CQuestionDetail } from "../components/questions";
-import { Create as OptionCreate, List as COptionList } from "../components/options";
+import { Create as QuestionCreateComponent, Detail as CQuestionDetail } from "../components/questions";
+import { AddModal as OptionAddModal, List as COptionList } from "../components/options";
+import { question as fetchQuestion, updateQuestion } from "../apis/question";
+import { options_within_question } from "../apis/options";
+import { delete_option } from "../apis/options";
+import { add_options } from "../apis/options";
 
 
 
 export const Create = () => {
 	const { vote_id } = useParams();
-	const [question, setQuestion] = useState<{ description: string, type_: "Single" | "Multi" }>({ description: "", type_: "Single" });
+	const [question, setQuestion] = useState<QuestionCreateModel>();
 	const [options, setOptions] = useState<string[]>([]);
+	const [visible, setVisible] = useState(false);
 	const navigate = useNavigate();
 	const create = async () => {
 		const res = await fetch(`/votes/${vote_id}/questions`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ question: question, options: options }),
+			body: JSON.stringify({ ...question, options: options }),
 		});
 		if (res.status !== 200) {
 			throw Error(res.statusText);
@@ -31,8 +37,9 @@ export const Create = () => {
 
 	return <div>
 		<Button onClick={() => {navigate(-1)}}>Back</Button>
-		<QuestionCreate onError={(err: Error) => { console.log(err) }} question={question} setQuestion={setQuestion} />
-		<OptionCreate onError={(err: Error) => { console.log(err) }} options={options} setOptions={setOptions} />
+		<QuestionCreateComponent question={question} setQuestion={setQuestion} />
+		<Button onClick={_ => setVisible(true)}>Add Options</Button>
+		<OptionAddModal visible={visible} options={options} setOptions={setOptions} onOk={ () => { setVisible(false) }} onCancel={ () => {setVisible(false)}}/>
 		<Button onClick={create}>Create</Button>
 	</div>
 
@@ -67,131 +74,94 @@ export const Detail = () => {
 
 	return <div>
 		<Button onClick={() => {navigate(-1)}}>Back</Button>
-		<CQuestionDetail question_id={question_id!} />
-		<COptionList question_id={question_id!} />
+		<CQuestionDetail question_id={parseInt(question_id!)} />
+		<COptionList question_id={parseInt(question_id!)} />
 
 	</div>
 }
 
 export const Update = () => {
 	const { question_id } = useParams();
-	const reducer = (state: any, action: any) => {
-		switch (action.type) {
-			case "SetQuestion":
-				return { ...state, question: action.data }
-			case "SetOptions":
-				return { ...state, options: action.data }
-			case "SetAlert":
-				setTimeout(() => {
-					dispatch({ type: "UnsetAlert" })
-				}, 3000)
-				return { ...state, alert: action.data }
-			case "UnsetAlert":
-				const newState = { ...state };
-				delete newState.alert;
-				return newState;
-			case "SetModalVisible":
-				return { ...state, modal: { ...state.modal, visible: action.data } }
-			case "SetModalOptions":
-				return { ...state, modal: { ...state.modal, options: action.data } }
-			case "NewOption":
-				return { ...state, modal: { ...state.modal, options: state.modal?.options?.concat({ option: "" }) } }
-		}
-	}
-	const [state, dispatch] = useReducer(reducer, {})
+	const [questionID, setQuestionID] = useState<number>();
+	const [question, setQuestion] = useState<QuestionModel>();
+	const [options, setOptions] = useState<string[]>([]);
+	const [visible, setVisible] = useState(false);
+	const [newOptions, setNewOptions] = useState<string[]>([]);
+	const nav = useNavigate();
 
 	useEffect(() => {
-		get<QuestionDetail>(`/questions/${question_id}`).then((qst) => {
-			dispatch({ type: "SetQuestion", data: qst })
-		}).catch((reason) => {
-			dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } });
-		});
-		get<{ list: OptItem[] }>(`/questions/${question_id}/options`, { params: { page: 1, size: 10 } }).then(resp => {
-			dispatch({ type: "SetOptions", data: resp.list });
-		}).catch(reason => {
-			dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } });
+		if (!question_id) {
+			message.error(`invalid question_id: ${question_id}`);
+			nav(-1);
+			return;
+		}
+		setQuestionID(parseInt(question_id));
+	}, [])
+
+	useEffect(() => {
+		if (!questionID || visible)  {
+			return
+		}
+		fetchQuestion(questionID)
+		.then(q => setQuestion(q))
+		.catch(err => {
+			message.error(err);
+			nav(-1);
+			return;
 		})
-	}, []);
+	}, [questionID, visible]);
+
+	useEffect(() => {
+		if (!questionID || visible) {
+			return;
+		}
+		options_within_question(questionID)
+		.then(opts => { setOptions(opts) })
+		.catch(err => {
+			message.error(err);
+			nav(-1);
+			return;
+		})
+	}, [questionID, visible])
+
 
 	const update = () => {
-		put(`questions/${question_id}`, { body: state.question }).then(() => {
-			dispatch({ type: "SetAlert", data: { type: "info", message: "Update Successfully" } });
-		}).catch(reason => {
-			dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } });
-		})
-	}
-
-	const removeOption = (option_id: number) => {
-		delete_(`/questions/${question_id}/options`).then(() => {
-			dispatch({ type: "SetOptions", data: state.options.filter((v: { id: number }) => v.id !== option_id) });
-		}).catch(reason => {
-			dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } });
+		if (!question || !questionID) {
+			return
+		}
+		updateQuestion(questionID, question)
+		.then()
+		.catch(err => {
+			message.error(err);
 		})
 	}
 
 	const addOptions = () => {
-		post(`/questions/${question_id}/options`, { body: state.modal.options }).then(() => {
-			get<{ list: OptItem[] }>(`/questions/${question_id}/options`).then((resp) => {
-				dispatch({ type: "SetOptions", data: resp.list });
-				dispatch({ type: "SetModalOptions", data: [{ option: "" }] });
-			}).catch(reason => {
-				dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } });
-			}).finally(() => {
-				dispatch({ type: "SetModalVisible", data: false });
-			});
-		}).catch(reason => {
-			dispatch({ type: "SetAlert", data: { type: "error", message: reason.toString() } })
-		})
-	}
-
-	const clearModal = () => {
-		dispatch({ type: "SetModalOptions", data: [{ option: "" }] });
-		dispatch({ type: "SetModalVisible", data: false });
-	}
-
-	const columns = [
-		{
-			title: "ID",
-			dataIndex: "id",
-			key: "id"
-		},
-		{
-			title: "Option",
-			dataIndex: "option",
-			key: "option",
-		},
-		{
-			title: "Actions",
-			dataIndex: "",
-			key: "",
-			render: (record: { id: number }) => {
-				return <div>
-					<Button onClick={() => { removeOption(record.id) }}>Remove</Button>
-				</div>
-			}
+		if (!questionID || !newOptions) {
+			return
 		}
+		add_options(questionID, newOptions)
+		.then(_ => { setNewOptions([]); setVisible(false)})
+		.catch(err => { message.error(err); setVisible(false) });
+	}
 
-	];
+
 
 	return <div>
-		{state.alert && <Alert type={state.alert.type} message={state.alert.type} />}
-		<Input value={state.question?.description} />
-		<Select value={state.question?.type_}>
-			<option value="Single">Single</option>
-			<option value="Multi">Multi</option>
+		<Input value={question?.description} />
+		<Select value={question?.type_}>
+			<option value={QuestionType.SINGLE}>Single</option>
+			<option value={QuestionType.MULTI}>Multi</option>
 
 		</Select>
 		<div>
 			<Button onClick={update}>Update</Button>
-			<Button onClick={() => { dispatch({ type: "SetModalVisible", data: true }) }}>Add Option</Button>
+			<Button onClick={() => { setVisible(true) }}>Add Option</Button>
 		</div>
-		<Modal visible={state.modal?.visible} onOk={addOptions} onCancel={clearModal}>
-			<Button onClick={() => { dispatch({ type: "NewOption" }) }}>Add</Button>
-			{state.modal?.options?.map((o: { option: string }) => {
-				return <Input value={o.option} />
-			})}
-		</Modal>
-		<Table columns={columns} dataSource={state.options}></Table>
+		<AddModal visible={visible} options={newOptions} setOptions={setNewOptions} onOk={addOptions} onCancel={() => setVisible(false)}></AddModal>
+		{ questionID 
+		? <OptionList question_id={questionID}></OptionList>
+		: <></>}
 	</div>
 }
 
