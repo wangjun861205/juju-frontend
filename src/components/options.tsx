@@ -54,29 +54,42 @@ type ListResponse = {
 	items: Item[],
 }
 
+interface ListProps {
+	questionID?: number
+	options?: Option[]
+	refresh?: number
+	setRefresh?: Dispatch<SetStateAction<number>>
+}
 
 
-export const List = ({ question_id }: { question_id: number }) => {
-	const [refresh, setRefresh] = useState(0);
+
+export const List = ({ questionID, options: _options, refresh, setRefresh }: ListProps) => {
 	const [options, setOptions] = useState<Option[]>();
 	const nav = useNavigate();
 
 	const remove = (id: number) => {
 		delete_option(id)
-		.then(_ => setRefresh(o => Math.abs(o-1)) )
+		.then(_ => setRefresh && setRefresh(o => Math.abs(o-1)) )
 		.catch(err => {
 			message.error(err);
 		})
 	}
 
 	useEffect(() => {
-		options_within_question(question_id)
-		.then(opts => setOptions(opts))
-		.catch(err => {
-			message.error(err);
-			nav(-1);
-		})
-	}, [question_id, refresh])
+		if (questionID) {
+			options_within_question(questionID)
+			.then(opts => setOptions(opts))
+			.catch(err => {
+				message.error(err);
+				nav(-1);
+			})
+			return
+		}
+		if (!_options) {
+			throw "must provide one of questionID or options"
+		}
+		setOptions(_options);
+	}, [questionID, _options, refresh])
 
 	return <div>
 		<Table columns={[

@@ -3,7 +3,7 @@ import { useEffect, useState, useReducer } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Alert as AlertModel } from "../models/alert";
 import { Detail as QuestionDetail, Create as QuestionCreateModel, Question as QuestionModel, QuestionType} from "../models/question";
-import { Create as OptCreate, Option as OptItem } from "../models/opt";
+import { Create as OptCreate, Option } from "../models/opt";
 import { get, post, put, delete_ } from "../utils/api";
 import "antd/dist/antd.css";
 import { List as CQuestionList } from "../components/questions";
@@ -75,61 +75,56 @@ export const Detail = () => {
 	return <div>
 		<Button onClick={() => {navigate(-1)}}>Back</Button>
 		<CQuestionDetail question_id={parseInt(question_id!)} />
-		<COptionList question_id={parseInt(question_id!)} />
+		<COptionList questionID={parseInt(question_id!)} />
 
 	</div>
 }
 
 export const Update = () => {
 	const { question_id } = useParams();
-	const [questionID, setQuestionID] = useState<number>();
+	const [refresh, setRefresh] = useState(0);
 	const [question, setQuestion] = useState<QuestionModel>();
-	const [options, setOptions] = useState<string[]>([]);
+	const [options, setOptions] = useState<Option[]>([]);
 	const [visible, setVisible] = useState(false);
 	const [newOptions, setNewOptions] = useState<string[]>([]);
 	const nav = useNavigate();
 
 	useEffect(() => {
-		if (!question_id) {
-			message.error(`invalid question_id: ${question_id}`);
-			nav(-1);
-			return;
-		}
-		setQuestionID(parseInt(question_id));
+		setRefresh(old => Math.abs(old - 1));
 	}, [])
 
 	useEffect(() => {
-		if (!questionID || visible)  {
+		if (!question_id)  {
 			return
 		}
-		fetchQuestion(questionID)
+		fetchQuestion(parseInt(question_id))
 		.then(q => setQuestion(q))
 		.catch(err => {
 			message.error(err);
 			nav(-1);
 			return;
 		})
-	}, [questionID, visible]);
+	}, [question_id]);
 
 	useEffect(() => {
-		if (!questionID || visible) {
+		if (!question_id) {
 			return;
 		}
-		options_within_question(questionID)
+		options_within_question(parseInt(question_id))
 		.then(opts => { setOptions(opts) })
 		.catch(err => {
 			message.error(err);
 			nav(-1);
 			return;
 		})
-	}, [questionID, visible])
+	}, [question_id, refresh])
 
 
 	const update = () => {
-		if (!question || !questionID) {
+		if (!question || !question_id) {
 			return
 		}
-		updateQuestion(questionID, question)
+		updateQuestion(parseInt(question_id), question)
 		.then()
 		.catch(err => {
 			message.error(err);
@@ -137,11 +132,15 @@ export const Update = () => {
 	}
 
 	const addOptions = () => {
-		if (!questionID || !newOptions) {
+		if (!question_id || !newOptions) {
 			return
 		}
-		add_options(questionID, newOptions)
-		.then(_ => { setNewOptions([]); setVisible(false)})
+		add_options(parseInt(question_id), newOptions)
+		.then(_ => { 
+			setNewOptions([]); 
+			setVisible(false); 
+			setRefresh(old => Math.abs(old - 1));
+		})
 		.catch(err => { message.error(err); setVisible(false) });
 	}
 
@@ -159,8 +158,8 @@ export const Update = () => {
 			<Button onClick={() => { setVisible(true) }}>Add Option</Button>
 		</div>
 		<AddModal visible={visible} options={newOptions} setOptions={setNewOptions} onOk={addOptions} onCancel={() => setVisible(false)}></AddModal>
-		{ questionID 
-		? <OptionList question_id={questionID}></OptionList>
+		{ options
+		? <OptionList options={options} refresh={refresh} setRefresh={setRefresh}></OptionList>
 		: <></>}
 	</div>
 }
