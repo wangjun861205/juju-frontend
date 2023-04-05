@@ -89,7 +89,7 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 	]
 	const fetch = () => {
 		setLoading!(true);
-		get<ResponseList<ListItem>>("/organizations", { params: { page: page, size: size } }).then(res => {
+		get<ResponseList<ListItem>>("/my/organizations", { params: { page: page, size: size } }).then(res => {
 			setOrgs(res);
 			setTotal!(res.total);
 		}).catch(reason => {

@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef, useContext } from "react"
-import { Button, Input, Pagination, Table, Alert, Checkbox } from "antd";
+import { useEffect, useState, useRef, useContext} from "react"
+import { Button, Input, Pagination, Table, Alert, Checkbox, message } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
 import { get, put, post } from "../utils/api";
@@ -11,6 +11,7 @@ import { PaginationWrapper, PaginationProps } from "../wrapper/pagination";
 import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
 import { ErrorWrapper } from "../wrapper/error";
+import { search as searchOrganization } from "../apis/organization";
 
 
 
@@ -177,7 +178,43 @@ const AddUsers = () => {
 }
 
 
+const Search = () => {
+	const [keyword, setKeyword] = useState<string>();
+	const [orgs, setOrgs] = useState();
+	const nav = useNavigate();
+	const columns = [
+		{
+			key: "id",
+			title: "ID",
+			dataIndex: "id",
+		},
+		{
+			key: "name",
+			title: "Name",
+			dataIndex: "name",
+		},
+	]
+
+	const search = () => {
+		if (!keyword) {
+			message.error("you must provide some keyword");
+			return
+		}
+		searchOrganization(keyword, 1, 10)
+		.then(orgs => setOrgs(orgs.list))
+		.catch(err => message.error(err));
+	}
+
+	return <>
+		<Button onClick={() => {nav(-1)}}>Back</Button>
+		<Input value={keyword} onChange={(event) => {setKeyword(event.target.value)}}></Input>
+		<Button disabled={!keyword!!} onClick={search}>Search</Button>
+		<Table columns={columns} dataSource={orgs}></Table>
+	</>
+}
 
 
 
-export { List, Create, Detail, Update, AddUsers };
+
+
+export { List, Create, Detail, Update, AddUsers, Search };

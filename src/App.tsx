@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import Signup from "./pages/signup";
 import Login from "./pages/login";
-import { List as OrganizationList, Create as CreateOrganization, Detail as OrganizationDetail, Update as UpdateOrganization, AddUsers } from "./pages/organization";
+import { List as OrganizationList, Create as CreateOrganization, Detail as OrganizationDetail, Update as UpdateOrganization, AddUsers, Search as SearchOrganization } from "./pages/organization";
 import { CreateVote, VoteList, Detail as VoteDetail, Update as VoteUpdate, Filling as VoteFilling } from './pages/votes';
 import { Create as QuestionCreate, Detail as QuestionDetail, Update as QuestionUpdate, List as QuestionList } from "./pages/question";
 import { List as AnswerList } from "./pages/answer";
@@ -27,6 +27,7 @@ function App() {
         <Route path="/organizations">
           <Route path="" element={<OrganizationList />} />
           <Route path="create" element={<CreateOrganization />} />
+          <Route path="search" element={<SearchOrganization />} />
           <Route path=":organization_id">
             <Route path="" element={<OrganizationDetail />} />
             <Route path="update" element={<UpdateOrganization />} />

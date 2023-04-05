@@ -1,4 +1,4 @@
-import { Input, Button, Alert } from "antd";
+import { Input, Button, Alert, message } from "antd";
 import { useState } from "react";
 import "antd/dist/antd.css";
 import "./signup.css";
@@ -13,7 +13,6 @@ const Signup = () => {
 		password: "",
 		invite_code: "",
 	});
-	const [alert, setAlert] = useState("");
 	const nav = useNavigate();
 	const signup = async () => {
 		const res = await fetch("/signup", {
@@ -22,12 +21,11 @@ const Signup = () => {
 			body: JSON.stringify(data),
 		});
 		if (res.status !== 200) {
-			setAlert(res.statusText);
+			throw await res.text();
 		}
 	}
 	return <div className="SignupWrap">
 		<div className="Signup">
-		{alert !== "" && <Alert message={alert} type="error" banner={true} />}
 		<Input placeholder="Nickname..." onChange={(e) => { setData({ ...data, nickname: e.target.value }) }} />
 		<Input placeholder="Phone..." onChange={(e) => { setData({ ...data, phone: e.target.value }) }} />
 		<Input placeholder="Email..." onChange={(e) => { setData({ ...data, email: e.target.value }) }} />
@@ -35,7 +33,11 @@ const Signup = () => {
 		<Input placeholder="Invite code" onChange={(e) => { setData({ ...data, invite_code: e.target.value }) }} />
 		<div className="ButtonRow">
 		<Button onClick={() => {
-			signup().catch((e) => {
+			signup().then( _ => {
+				message.success("signup successfully");
+				nav('/login');
+			}
+			).catch((e) => {
 				console.log(e)
 			});
 		}}>Signup</Button>
