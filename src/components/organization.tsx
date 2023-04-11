@@ -5,7 +5,7 @@ import { AlertProps } from "../wrapper/alert";
 import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
 import { PaginationProps } from "../wrapper/pagination";
-import { LoadingProps } from "../wrapper/spin"
+import { LoadingContext, LoadingProps } from "../wrapper/spin"
 import { Navbar } from "./navbar";
 import { ErrorProps } from "../wrapper/error";
 
@@ -35,9 +35,10 @@ type ListItem = {
 }
 
 
-export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProps & PaginationProps & ErrorProps) => {
+export const List = ({ page, size, setTotal, setError }: PaginationProps & ErrorProps) => {
 	const [orgs, setOrgs] = useState<ResponseList<ListItem>>();
 	const nav = useNavigate();
+	const setLoading = useContext(LoadingContext);
 
 	const del = async (id: number) => {
 		setLoading!(true);
@@ -47,7 +48,7 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 			// setAlert!({ type: "error", message: reason });
 			setError(reason);
 		}).finally(() => {
-			setLoading!(false);
+			setLoading && setLoading(false);
 			// setTimeout(() => {
 			// 	setAlert!(null);
 			// }, 2000);
@@ -97,7 +98,7 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 			// setTimeout(() => { setAlert!(null) }, 2000);
 			setError(reason);
 		}).finally(() => {
-			setLoading(false);
+			setLoading && setLoading(false);
 		});
 	}
 
@@ -112,6 +113,7 @@ export const List = ({ setLoading, page, size, setTotal, setError }: LoadingProp
 	return <>
 		<Navbar />
 		<Button onClick={create}>Create</Button>
+		<Button onClick={() => nav('/organizations/search')}>Go to Search</Button>
 		<Table columns={columns} dataSource={orgs?.list} pagination={false} onRow={(data) => {
 			return {
 				onClick: () => {

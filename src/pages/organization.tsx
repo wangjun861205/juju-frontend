@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useContext} from "react"
+import { useEffect, useState, useRef, useContext, createContext, Context} from "react"
 import { Button, Input, Pagination, Table, Alert, Checkbox, message } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
@@ -6,7 +6,7 @@ import { get, put, post } from "../utils/api";
 import { List as ResponseList } from "../utils/response";
 import { List as CVoteList } from "../components/vote";
 import { Detail as COrganizationDetail, List as OrganizationList, Create as OrganizationCreate } from "../components/organization";
-import { LoadingWrapper, LoadingProps } from "../wrapper/spin";
+import { LoadingWrapper, LoadingProps, LoadingContext } from "../wrapper/spin";
 import { PaginationWrapper, PaginationProps } from "../wrapper/pagination";
 import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
@@ -50,6 +50,7 @@ const Create = () => {
 		});
 	}
 	return <div>
+		<Button onClick={() => {nav(-1)}}>Back</Button>
 		<Input placeholder="Name" onChange={(e) => { setData({ name: e.target.value }) }} />
 		<Button onClick={() => { create() }}>Create</Button>
 	</div>
@@ -182,6 +183,7 @@ const Search = () => {
 	const [keyword, setKeyword] = useState<string>();
 	const [orgs, setOrgs] = useState();
 	const nav = useNavigate();
+	const setLoading = useContext(LoadingContext);
 	const columns = [
 		{
 			key: "id",
@@ -200,9 +202,13 @@ const Search = () => {
 			message.error("you must provide some keyword");
 			return
 		}
+		setLoading && setLoading(true);
 		searchOrganization(keyword, 1, 10)
 		.then(orgs => setOrgs(orgs.list))
-		.catch(err => message.error(err));
+		.catch(err => message.error(err))
+		.finally(() => {
+			setLoading && setLoading(false);
+		});
 	}
 
 	return <>
@@ -214,7 +220,7 @@ const Search = () => {
 }
 
 
+const SearchWithContext = LoadingWrapper(Search);
 
 
-
-export { List, Create, Detail, Update, AddUsers, Search };
+export { List, Create, Detail, Update, AddUsers, Search, SearchWithContext };
