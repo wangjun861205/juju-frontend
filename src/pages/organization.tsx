@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useContext, createContext, Context} from "react"
-import { Button, Input, Pagination, Table, Alert, Checkbox, message } from "antd";
+import { Button, Input, Pagination, Table, Alert, Checkbox, message, Form, Radio } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
 import { get, put, post } from "../utils/api";
@@ -12,6 +12,10 @@ import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
 import { ErrorWrapper } from "../wrapper/error";
 import { search as searchOrganization } from "../apis/organization";
+import { SideMenu } from "../components/sidemenu";
+import './organization.css'
+import { Navbar } from "../components/navbar";
+import TextArea from "antd/lib/input/TextArea";
 
 
 
@@ -20,12 +24,14 @@ const List = ErrorWrapper(LoadingWrapper(OrganizationList));
 
 const Create = () => {
 	const nav = useNavigate();
-	const [data, setData] = useState({ name: "" });
+	const [name, setName] = useState<string>();
+	const [desc, setDesc] = useState<string>();
+	const [isPrivate, setIsPrivate] = useState<boolean>();
 	const doRequest = async () => {
 		const res = await fetch("/organizations", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(data),
+			body: JSON.stringify({name: name, description: desc, is_private: isPrivate}),
 		});
 		if (res.status !== 200) {
 			throw new HttpError(res.status, res.statusText);
@@ -50,9 +56,19 @@ const Create = () => {
 		});
 	}
 	return <div>
-		<Button onClick={() => {nav(-1)}}>Back</Button>
-		<Input placeholder="Name" onChange={(e) => { setData({ name: e.target.value }) }} />
-		<Button onClick={() => { create() }}>Create</Button>
+		<Navbar />
+		<SideMenu>
+			<Button onClick={() => {nav(-1)}}>Back</Button>
+			<Form onFinish={create}>
+				<Input className='name' placeholder="Name" onChange={(e) => { setName(e.target.value) }} />
+				<TextArea className='desc' rows={10} placeholder='Description' onChange={(e) => setDesc(e.target.value) } />
+				<Radio.Group className='radio-group'>
+					<Radio className='radio-selection' value='Private'>Private</Radio>
+					<Radio className='radio-selection' value='Public'>Public</Radio>
+				</Radio.Group>
+				<Button type='primary'>Create</Button>
+			</Form>
+		</SideMenu>
 	</div>
 }
 
