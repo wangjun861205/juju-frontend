@@ -16,7 +16,7 @@ import { search as searchOrganization } from "../apis/organization";
 
 
 
-const List = PaginationWrapper(ErrorWrapper(LoadingWrapper(OrganizationList)));
+const List = ErrorWrapper(LoadingWrapper(OrganizationList));
 
 const Create = () => {
 	const nav = useNavigate();

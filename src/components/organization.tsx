@@ -8,6 +8,7 @@ import { PaginationProps } from "../wrapper/pagination";
 import { LoadingContext, LoadingProps } from "../wrapper/spin"
 import { Navbar } from "./navbar";
 import { ErrorProps } from "../wrapper/error";
+import { SideMenu } from "./sidemenu";
 
 type Item = {
 	id: number,
@@ -35,10 +36,13 @@ type ListItem = {
 }
 
 
-export const List = ({ page, size, setTotal, setError }: PaginationProps & ErrorProps) => {
+export const List = ({ setError }: ErrorProps) => {
 	const [orgs, setOrgs] = useState<ResponseList<ListItem>>();
 	const nav = useNavigate();
 	const setLoading = useContext(LoadingContext);
+	const [page, setPage] = useState(1);
+	const [total, setTotal] = useState(0);
+
 
 	const del = async (id: number) => {
 		setLoading!(true);
@@ -90,9 +94,9 @@ export const List = ({ page, size, setTotal, setError }: PaginationProps & Error
 	]
 	const fetch = () => {
 		setLoading!(true);
-		get<ResponseList<ListItem>>("/my/organizations", { params: { page: page, size: size } }).then(res => {
+		get<ResponseList<ListItem>>("/my/organizations", { params: { page: page, size: 20 } }).then(res => {
 			setOrgs(res);
-			setTotal!(res.total);
+			setTotal(res.total);
 		}).catch(reason => {
 			// setAlert({ message: `${reason}`, type: "error" });
 			// setTimeout(() => { setAlert!(null) }, 2000);
@@ -104,24 +108,26 @@ export const List = ({ page, size, setTotal, setError }: PaginationProps & Error
 
 	useEffect(() => {
 		fetch();
-	}, [page, size]);
+	}, [page]);
 
 	const create = () => {
 		nav('/organizations/create');
 	}
 
-	return <>
+	return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
 		<Navbar />
+		<SideMenu>
 		<Button onClick={create}>Create</Button>
 		<Button onClick={() => nav('/organizations/search')}>Go to Search</Button>
-		<Table columns={columns} dataSource={orgs?.list} pagination={false} onRow={(data) => {
+		<Table columns={columns} dataSource={orgs?.list} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
 				onClick: () => {
 					nav(`/organizations/${data.id}`)
 				}
 			}
 		}}/>
-	</>}
+		</SideMenu>
+	</div>}
 
 interface Organization {
 	name: string
