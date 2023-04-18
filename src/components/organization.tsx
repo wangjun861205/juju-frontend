@@ -9,6 +9,7 @@ import { LoadingContext, LoadingProps } from "../wrapper/spin"
 import { Navbar } from "./navbar";
 import { ErrorProps } from "../wrapper/error";
 import { SideMenu } from "./sidemenu";
+import "./organization.css";
 
 type Item = {
 	id: number,
@@ -47,15 +48,10 @@ export const List = ({ setError }: ErrorProps) => {
 	const del = async (id: number) => {
 		setLoading!(true);
 		delete_(`/organizations/${id}`).then(() => {
-			// setAlert!({ type: "success", message: "success delete" });
 		}).catch((reason) => {
-			// setAlert!({ type: "error", message: reason });
 			setError(reason);
 		}).finally(() => {
 			setLoading && setLoading(false);
-			// setTimeout(() => {
-			// 	setAlert!(null);
-			// }, 2000);
 		})
 	}
 
@@ -117,8 +113,7 @@ export const List = ({ setError }: ErrorProps) => {
 	return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
 		<Navbar />
 		<SideMenu>
-		<Button onClick={create}>Create</Button>
-		<Button onClick={() => nav('/organizations/search')}>Go to Search</Button>
+		<Button type="primary" onClick={create}>Create</Button>
 		<Table columns={columns} dataSource={orgs?.list} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
 				onClick: () => {

@@ -66,7 +66,7 @@ const Create = () => {
 					<Radio className='radio-selection' value='Private'>Private</Radio>
 					<Radio className='radio-selection' value='Public'>Public</Radio>
 				</Radio.Group>
-				<Button type='primary'>Create</Button>
+				<Form.Item><Button type='primary'>Create</Button></Form.Item>
 			</Form>
 		</SideMenu>
 	</div>

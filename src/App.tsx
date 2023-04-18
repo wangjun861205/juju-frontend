@@ -14,6 +14,7 @@ import Profile from "./pages/profile";
 
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SideMenu } from './components/sidemenu';
 
 function App() {
 
