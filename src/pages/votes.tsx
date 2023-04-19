@@ -17,6 +17,7 @@ import { DatePicker } from "antd";
 import { U as DateRangeUpdate } from "../components/date";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
 import { Report as DateReport } from "../components/date";
+import { SideMenu } from "../components/sidemenu";
 
 
 export type Vote = {
@@ -117,10 +118,12 @@ export const VoteList = () => {
   ]
 
   return <div>
-    {data.alert !== "" && <Alert type="error" message={data.alert} banner={true} />}
-    <Button onClick={() => { nav(`/organizations/${organization_id}/create_vote`) }}>Add</Button>
-    <Table dataSource={data.list} columns={columns} />
-    <Pagination pageSize={data.size} current={data.page} total={data.total} />
+    <SideMenu>
+      {data.alert !== "" && <Alert type="error" message={data.alert} banner={true} />}
+      <Button onClick={() => { nav(`/organizations/${organization_id}/create_vote`) }}>Add</Button>
+      <Table dataSource={data.list} columns={columns} />
+      <Pagination pageSize={data.size} current={data.page} total={data.total} />
+    </SideMenu>
   </div>
 
 }

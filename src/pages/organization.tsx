@@ -82,10 +82,13 @@ const Detail = () => {
 	const { organization_id } = useParams();
 
 	return <div>
-		<COrganizationDetail organization_id={organization_id!} />
-		<Button onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
-		<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
-		<CVoteList organization_id={organization_id!} />
+		<Navbar />
+		<SideMenu>
+			<COrganizationDetail organization_id={organization_id!} />
+			<Button type="primary" onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
+			<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
+			<CVoteList organization_id={organization_id!} />
+		</SideMenu>
 	</div>
 
 

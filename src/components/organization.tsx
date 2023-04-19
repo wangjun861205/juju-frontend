@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react"
 import { get, delete_, post } from "../utils/api";
-import { List as CList, Button, Table, Form, Input } from "antd";
+import { List as CList, Button, Table, Form, Input, message } from "antd";
 import { AlertProps } from "../wrapper/alert";
 import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
@@ -10,6 +10,8 @@ import { Navbar } from "./navbar";
 import { ErrorProps } from "../wrapper/error";
 import { SideMenu } from "./sidemenu";
 import "./organization.css";
+import { debug } from "console";
+import { createSearchParams } from "react-router-dom";
 
 type Item = {
 	id: number,
@@ -38,7 +40,7 @@ type ListItem = {
 
 
 export const List = ({ setError }: ErrorProps) => {
-	const [orgs, setOrgs] = useState<ResponseList<ListItem>>();
+	const [orgs, setOrgs] = useState<ListItem[]>();
 	const nav = useNavigate();
 	const setLoading = useContext(LoadingContext);
 	const [page, setPage] = useState(1);
@@ -88,22 +90,30 @@ export const List = ({ setError }: ErrorProps) => {
 			}
 		}
 	]
-	const fetch = () => {
-		setLoading!(true);
-		get<ResponseList<ListItem>>("/my/organizations", { params: { page: page, size: 20 } }).then(res => {
-			setOrgs(res);
-			setTotal(res.total);
-		}).catch(reason => {
-			// setAlert({ message: `${reason}`, type: "error" });
-			// setTimeout(() => { setAlert!(null) }, 2000);
-			setError(reason);
-		}).finally(() => {
-			setLoading && setLoading(false);
-		});
-	}
-
 	useEffect(() => {
-		fetch();
+		setLoading && setLoading(true);
+		fetch(`/my/organizations?page=${page}&size=20`)
+		.then(res => {
+			switch (res.status) {
+				case 200:
+					res.json().then(data => {
+						console.log(data)
+						setOrgs(data.list);
+						setTotal(data.total);
+						setLoading && setLoading(false);
+					}).catch(err => message.error(err))
+					return
+				case 401:
+					nav("/login");
+					return
+				default: 
+					res.text().then(err => message.error(err)).catch(err => message.error(err))
+					return
+			}
+		}).catch(reason => {
+			message.error(reason);
+			setLoading && setLoading(true);
+		})
 	}, [page]);
 
 	const create = () => {
@@ -114,7 +124,7 @@ export const List = ({ setError }: ErrorProps) => {
 		<Navbar />
 		<SideMenu>
 		<Button type="primary" onClick={create}>Create</Button>
-		<Table columns={columns} dataSource={orgs?.list} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
+		<Table columns={columns} dataSource={orgs} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
 				onClick: () => {
 					nav(`/organizations/${data.id}`)
