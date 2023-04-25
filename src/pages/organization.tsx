@@ -12,10 +12,9 @@ import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
 import { ErrorWrapper } from "../wrapper/error";
 import { search as searchOrganization } from "../apis/organization";
-import { SideMenu } from "../components/sidemenu";
 import './organization.css'
-import { Navbar } from "../components/navbar";
 import TextArea from "antd/lib/input/TextArea";
+import { Layout } from "../layout/layout";
 
 
 
@@ -56,8 +55,7 @@ const Create = () => {
 		});
 	}
 	return <div>
-		<Navbar />
-		<SideMenu>
+		<Layout>
 			<Button onClick={() => {nav(-1)}}>Back</Button>
 			<Form onFinish={create}>
 				<Input className='name' placeholder="Name" onChange={(e) => { setName(e.target.value) }} />
@@ -68,7 +66,7 @@ const Create = () => {
 				</Radio.Group>
 				<Form.Item><Button type='primary'>Create</Button></Form.Item>
 			</Form>
-		</SideMenu>
+		</Layout>
 	</div>
 }
 
@@ -82,13 +80,12 @@ const Detail = () => {
 	const { organization_id } = useParams();
 
 	return <div>
-		<Navbar />
-		<SideMenu>
+		<Layout>
 			<COrganizationDetail organization_id={organization_id!} />
 			<Button type="primary" onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
 			<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
 			<CVoteList organization_id={organization_id!} />
-		</SideMenu>
+		</Layout>
 	</div>
 
 

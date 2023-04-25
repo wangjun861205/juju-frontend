@@ -25,5 +25,18 @@
 }
 
 .Content {
-    width: 60%;
+    width: 70%;
+}
+
+.profile-menu {
+  position: absolute;
+  display: block;
+  width: 100px;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+}
+
+.Navbar {
+  height: 80px;
 }

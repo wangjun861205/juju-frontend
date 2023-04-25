@@ -6,9 +6,8 @@ import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
 import { PaginationProps } from "../wrapper/pagination";
 import { LoadingContext, LoadingProps } from "../wrapper/spin"
-import { Navbar } from "./navbar";
 import { ErrorProps } from "../wrapper/error";
-import { SideMenu } from "./sidemenu";
+import { Layout } from "../layout/layout";
 import "./organization.css";
 import { debug } from "console";
 import { createSearchParams } from "react-router-dom";
@@ -121,8 +120,7 @@ export const List = ({ setError }: ErrorProps) => {
 	}
 
 	return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
-		<Navbar />
-		<SideMenu>
+		<Layout>
 		<Button type="primary" onClick={create}>Create</Button>
 		<Table columns={columns} dataSource={orgs} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
@@ -131,7 +129,7 @@ export const List = ({ setError }: ErrorProps) => {
 				}
 			}
 		}}/>
-		</SideMenu>
+		</Layout>
 	</div>}
 
 interface Organization {
