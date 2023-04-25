@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { question_ids_within_vote } from "../apis/question";
-import { Filling as FillingComponent } from "../components/questions";
+import { Filling as FillingComponent } from "./questions";
 
 enum Status {
 	Closed,
