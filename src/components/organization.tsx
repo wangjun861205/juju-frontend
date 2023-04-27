@@ -119,8 +119,7 @@ export const List = ({ setError }: ErrorProps) => {
 		nav('/organizations/create');
 	}
 
-	return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
-		<Layout>
+	return <Layout>
 		<Button type="primary" onClick={create}>Create</Button>
 		<Table columns={columns} dataSource={orgs} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
@@ -130,7 +129,7 @@ export const List = ({ setError }: ErrorProps) => {
 			}
 		}}/>
 		</Layout>
-	</div>}
+}
 
 interface Organization {
 	name: string

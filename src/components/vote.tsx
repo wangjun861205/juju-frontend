@@ -142,13 +142,13 @@ export const Update = ({ id }: { id: string }) => {
 
 	return <div>
 		<Input value={data.name} onChange={event => setData({ ...data, name: event.target.value })} />
-		<DatePicker mode="date" value={moment(data.deadline)} picker="date" onChange={d => {
+		{/* <DatePicker mode="date" value={moment(data.deadline)} picker="date" onChange={d => {
 			if (d && d.format("YYYY-MM-DD") < moment().format("YYYY-MM-DD")) {
 				setData({ ...data, deadline: d.format("YYYY-MM-DD"), status: "Closed" });
 			} else {
 				setData({ ...data, deadline: d ? d.format("YYYY-MM-DD") : null, status: "Collecting" });
 			}
-		}} />
+		}} /> */}
 		<Input disabled={true} value={data.status} />
 		<Button onClick={update}>Update</Button>
 	</div>

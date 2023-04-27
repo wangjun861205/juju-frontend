@@ -6,7 +6,7 @@ import { List as OrganizationList, Create as CreateOrganization, Detail as Organ
 import { CreateVote, VoteList, Detail as VoteDetail, Update as VoteUpdate, Filling as VoteFilling } from './pages/votes';
 import { Create as QuestionCreate, Detail as QuestionDetail, Update as QuestionUpdate, List as QuestionList } from "./pages/question";
 import { List as AnswerList } from "./pages/answer";
-import { Update as DateUpdate, Report as DateReport } from "./pages/date";
+// import { Update as DateUpdate, Report as DateReport } from "./pages/date";
 import { Report } from "./pages/votes";
 import { Find as FindUser, List as UserList } from "./pages/user";
 import { PaginationWrapper } from './wrapper/pagination';
@@ -49,10 +49,10 @@ function App() {
               <Route path="" element={<QuestionList />} />
               <Route path="create" element={<QuestionCreate />} />
             </Route>
-            <Route path="date_ranges" >
+            {/* <Route path="date_ranges" >
               <Route path="" element={<DateUpdate />} />
               <Route path="report" element={<DateReport />} />
-            </Route>
+            </Route> */}
             <Route path="report" element={<Report />} />
           </Route>
         </Route>

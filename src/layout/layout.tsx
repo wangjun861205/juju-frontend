@@ -1,30 +1,50 @@
 import { MouseEventHandler, PropsWithChildren } from 'react';
-import {  Link } from 'react-router-dom';
-import { Avatar, Menu, Image } from "antd";
+import {  Link, useNavigate } from 'react-router-dom';
+import { Avatar, Menu, Image, Dropdown, Button, message} from "antd";
+import type { MenuProps } from "antd";
 import React, { useState, ReactElement } from "react"
+import "./layout.css"
 
 
 
 const ProfileMenu = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const nav = useNavigate();
+    const items: MenuProps['items'] = [
+        {
+            label: (<a>Profile</a>),
+            key: '0',
+        },
+        {
+            type: 'divider',
+        },
+        {
+            label: "Logout",
+            key: '1',
+            onClick: () => {
+                fetch("/logout").then(res => {
+                    if (res.status !== 200) {
+                        res.text()
+                        .then( msg => {
+                            message.error(msg)
+                        })
+                        .catch( e => message.error(e))
+                        return
+                    }
+                    nav("/");
+                }).catch(e => message.error(e))
+            }
+        }
+    ] 
 
-    const onMouseEnter: MouseEventHandler<HTMLImageElement> = (event) => {
-        event.stopPropagation();
-        setIsOpen(true);
+    const style: MenuProps['style'] = {
+        'width': '150px',
     }
-
-    const onMouseLeave: MouseEventHandler<HTMLImageElement> = (event) => {
-        event.stopPropagation();
-        setIsOpen(false);
-    }
-
-    return      <div>
-                    <Image src="/Ducati.png" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} preview={false}/>
-                    <Menu className="profile-menu">
-                            <Menu.Item>Profile</Menu.Item>
-                            <Menu.Item>Logout</Menu.Item>
-                    </Menu>
+    return      <div className="ProfileMenu">
+                    <Dropdown menu={{items, style}} placement='bottomRight'>
+                        <Avatar src="/Ducati.png" shape='circle' size='large'/>
+                    </Dropdown>
                 </div>
+
 }
 
 export const Navbar = () => {
@@ -37,16 +57,18 @@ export const Navbar = () => {
 export const Layout = <P, >({children}: PropsWithChildren<P>) => {
     return <div className='Outmost'>
                 <Navbar />
-                <div className='SideMenu'>
-                    <Menu className='Menu'>
-                        <Menu.Item><Link to='/organizations/search'>Organziations</Link></Menu.Item>
-                        <Menu.Item><Link to='/votes/search'>Votes</Link></Menu.Item>
-                        <Menu.Item><Link to='/questions/search'>Questions</Link></Menu.Item>
-                        <Menu.Item><Link to='/answers/search'>Answers</Link></Menu.Item>
-                    </Menu>
-                </div>
-                <div className='Content'>
-                    { children }
+                <div className="Middle">
+                    <div className='SideMenu'>
+                        <Menu className='Menu'>
+                            <Menu.Item><Link to='/organizations/search'>Organziations</Link></Menu.Item>
+                            <Menu.Item><Link to='/votes/search'>Votes</Link></Menu.Item>
+                            <Menu.Item><Link to='/questions/search'>Questions</Link></Menu.Item>
+                            <Menu.Item><Link to='/answers/search'>Answers</Link></Menu.Item>
+                        </Menu>
+                    </div>
+                    <div className='Content'>
+                        { children }
+                    </div>
                 </div>
             </div>
 }

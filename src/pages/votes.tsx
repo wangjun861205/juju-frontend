@@ -14,9 +14,9 @@ import { get, post, fetch_list } from "../utils/api";
 import { _Report, Report as QuestionReport, List as CQuestionList } from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
-import { U as DateRangeUpdate } from "../components/date";
+// import { U as DateRangeUpdate } from "../components/date";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
-import { Report as DateReport } from "../components/date";
+// import { Report as DateReport } from "../components/date";
 import { Layout } from "../layout/layout";
 
 
@@ -54,7 +54,7 @@ export const CreateVote = () => {
   return <div>
     {alert !== "" && <Alert type="error" message={alert} banner={true} />}
     <Input placeholder="Name" onChange={(e) => { setData({ ...data, name: e.target.value }) }} />
-    <DatePicker value={data.deadline} onChange={(date) => { setData({ ...data, deadline: date }) }} />
+    {/* <DatePicker value={data.deadline} onChange={(date) => { setData({ ...data, deadline: date }) }} /> */}
     <Button onClick={() => { create().catch((r) => { setAlert(r) }) }}>Create</Button>
 
   </div>
@@ -139,7 +139,7 @@ export const Detail = () => {
   return <div>
     <Button onClick={() => { nav(-1) }}>Back</Button>
     <CVoteDetail id={vote_id!} />
-    <DateRangeUpdate vote_id={vote_id!} />
+    {/* <DateRangeUpdate vote_id={vote_id!} /> */}
     <Button onClick={() => { nav(`/votes/${vote_id}/questions/create`) }}>Add Question</Button>
     <CQuestionList vote_id={vote_id!} />
   </div>
@@ -164,7 +164,7 @@ export const Report = () => {
   }, [])
   return <div>
     <Button onClick={() => { nav(-1) }}>Back</Button>
-    <DateReport vote_id={vote_id!} />
+    {/* <DateReport vote_id={vote_id!} /> */}
     {questionReport.map(r => <QuestionReport report={r} />)}
   </div>
 }

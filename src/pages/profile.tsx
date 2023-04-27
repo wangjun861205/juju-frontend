@@ -27,9 +27,9 @@ const Profile =  () => {
     }
     return <>
         <Input placeholder="Nickname..." onChange={e => setData(curr => {return { ...curr, nickname: e.target.value }})} />
-        <Upload name="file" action="/upload" onChange={onChange} multiple={true} listType="picture-card">
+        {/* <Upload name="file" action="/upload" onChange={onChange} multiple={true} listType="picture-card">
                 <Button icon={<PlusOutlined />}></Button>
-        </Upload>
+        </Upload> */}
         <Button onClick={() => {console.log(data)}}>Submit</Button>
     </>
 }
