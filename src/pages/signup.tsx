@@ -1,6 +1,5 @@
 import { Input, Button, Alert, message } from "antd";
 import { useState } from "react";
-import "antd/dist/antd.css";
 import "./signup.css";
 import { useNavigate } from "react-router";
 

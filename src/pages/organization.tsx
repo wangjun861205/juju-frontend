@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useContext, createContext, Context} from "react"
-import { Button, Input, Pagination, Table, Alert, Checkbox, message, Form, Radio } from "antd";
+import { Button, Input, Pagination, Table, Alert, Checkbox, message, Form, Radio, Row } from "antd";
 import { useNavigate, useParams } from "react-router";
 import { HttpError } from "../errors";
 import { get, put, post } from "../utils/api";
@@ -8,7 +8,6 @@ import { List as CVoteList } from "../components/vote";
 import { Detail as COrganizationDetail, List as OrganizationList, Create as OrganizationCreate } from "../components/organization";
 import { LoadingWrapper, LoadingProps, LoadingContext } from "../wrapper/spin";
 import { PaginationWrapper, PaginationProps } from "../wrapper/pagination";
-import "antd/dist/antd.css";
 import { AlertProps, AlertWrapper } from "../wrapper/alert";
 import { ErrorWrapper } from "../wrapper/error";
 import { search as searchOrganization } from "../apis/organization";
@@ -23,49 +22,10 @@ const List = ErrorWrapper(LoadingWrapper(OrganizationList));
 
 const Create = () => {
 	const nav = useNavigate();
-	const [name, setName] = useState<string>();
-	const [desc, setDesc] = useState<string>();
-	const [isPrivate, setIsPrivate] = useState<boolean>();
-	const doRequest = async () => {
-		const res = await fetch("/organizations", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({name: name, description: desc, is_private: isPrivate}),
-		});
-		if (res.status !== 200) {
-			throw new HttpError(res.status, res.statusText);
-		}
-	}
-
-	const create = () => {
-		doRequest().catch((e) => {
-			switch (true) {
-				case e instanceof HttpError:
-					if (e.status === 401) {
-						nav("/login");
-					}
-					console.log(e);
-					break;
-				default:
-					console.log(e);
-					break;
-			}
-		}).then(() => {
-			nav("/organizations");
-		});
-	}
 	return <div>
 		<Layout>
-			<Button onClick={() => {nav(-1)}}>Back</Button>
-			<Form onFinish={create}>
-				<Input className='name' placeholder="Name" onChange={(e) => { setName(e.target.value) }} />
-				<TextArea className='desc' rows={10} placeholder='Description' onChange={(e) => setDesc(e.target.value) } />
-				<Radio.Group className='radio-group'>
-					<Radio className='radio-selection' value='Private'>Private</Radio>
-					<Radio className='radio-selection' value='Public'>Public</Radio>
-				</Radio.Group>
-				<Form.Item><Button type='primary'>Create</Button></Form.Item>
-			</Form>
+			<Button className='BackButton' onClick={() => {nav(-1)}}>Back</Button>
+			<OrganizationCreate />
 		</Layout>
 	</div>
 }
@@ -82,8 +42,10 @@ const Detail = () => {
 	return <div>
 		<Layout>
 			<COrganizationDetail organization_id={organization_id!} />
-			<Button type="primary" onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
-			<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
+			<Row className="ButtonRow">
+				<Button type="primary" onClick={() => { nav(`/organizations/${organization_id}/votes/create`) }} >Create Vote</Button>
+				<Button onClick={() => { nav(`/organizations/${organization_id}/users/add`) }} >Add Users</Button>
+			</Row>
 			<CVoteList organization_id={organization_id!} />
 		</Layout>
 	</div>

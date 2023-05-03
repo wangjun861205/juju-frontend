@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Option as OptItem } from "./opt";
 import { get, delete_ } from "../utils/api";
 import { Table, Button } from "antd";
+import { Create as OptionCreate } from "./opt"
 
 export enum QuestionType {
   SINGLE = 'SINGLE',
@@ -25,6 +26,7 @@ export type ListItem = {
 export type Create = {
   description: string,
   type_: QuestionType,
+  options: OptionCreate[],
 }
 
 export type Detail = {

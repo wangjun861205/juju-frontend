@@ -17,3 +17,18 @@ Form {
 Form Button {
     margin-top: 40px;
 }
+
+.BackButton {
+    margin-bottom: 60px;
+}
+
+.ButtonRow {
+    justify-content: left;
+}
+
+.ButtonRow Button {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+    border-radius: 5px;
+}

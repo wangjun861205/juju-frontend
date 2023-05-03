@@ -1,11 +1,13 @@
-import { useState, useEffect, ChangeEvent } from "react";
-import { Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent } from "antd";
+import { useState, useEffect, ChangeEvent, Dispatch, SetStateAction } from "react";
+import { Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent, Form, Steps } from "antd";
 import { get, ListResponse, delete_, DeleteResponse, Pagination, put, UpdateResponse } from "../utils/api";
 import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { question_ids_within_vote } from "../apis/question";
 import { Filling as FillingComponent } from "./questions";
+import { Create as VoteCreateModel } from "../models/vote";
+import dayjs, { Dayjs } from "dayjs";
 
 enum Status {
 	Closed,
@@ -224,4 +226,23 @@ export const Filling = ({ id }: { id: number }) => {
 	  : <></>
 	}
 	</>
+}
+
+interface VoteCreateProps {
+	data: VoteCreateModel,
+	setData: Dispatch<SetStateAction<VoteCreateModel>>,
+}
+
+export const Create = ({data, setData}: VoteCreateProps) => {
+	return <Form>
+				<Form.Item label="Name"><Input value={data.name} onChange={(e) => setData(prev => { return {...data, name: e.target.value}})}/></Form.Item>
+				<Form.Item label="Deadline"><DatePicker value={data.deadline ? dayjs(data.deadline) : dayjs()} onChange={(v) => setData(prev => { return { ...data, deadline: v ? v.format("YYYY-MM-DD") : null}})}/></Form.Item>
+				<Form.Item label="Visibility">
+					<Radio.Group value={data.visibility} onChange={(e) => setData(prev => { return { ...data, visibility: e.target.value}})}>
+						<Radio value="Public">Public</Radio>
+						<Radio value="Organization">Organization</Radio>
+						<Radio value="WhiteList">White List</Radio>
+					</Radio.Group>
+				</Form.Item>
+			</Form>
 }

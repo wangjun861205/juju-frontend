@@ -1,5 +1,5 @@
 import Calendar from "../components/calendar"
-import { Input, Button, Alert, Table, Pagination, Select, message } from "antd";
+import { Input, Button, Alert, Table, Pagination, Select, message, Steps, Row, Descriptions, Card, Grid, Divider, Col, List } from "antd";
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Detail as VoteDetail } from "../models/vote";
@@ -11,13 +11,16 @@ import {
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { get, post, fetch_list } from "../utils/api";
-import { _Report, Report as QuestionReport, List as CQuestionList } from "../components/questions";
+import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent, Upsert} from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
-// import { U as DateRangeUpdate } from "../components/date";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
-// import { Report as DateReport } from "../components/date";
 import { Layout } from "../layout/layout";
+import {Create as CreateVoteComponent} from "../components/vote";
+import { Create as VoteCreateModel } from "../models/vote";
+import { QuestionType, Create as QuestionCreateModel } from "../models/question";
+import "./vote.css";
+import { GridList } from "@material-ui/core";
 
 
 export type Vote = {
@@ -37,27 +40,88 @@ type CreationResponse = {
 
 export const CreateVote = () => {
   const { organization_id } = useParams();
-  const [data, setData] = useState<Creation>({ name: "", deadline: null });
-
-
-  const [alert, setAlert] = useState("");
   const nav = useNavigate();
+  const [current, setCurrent] = useState(0);
+  const [vote, setVote] = useState<VoteCreateModel>({name: "", deadline: null, visibility: 'Organization', questions: [], organization_id: parseInt(organization_id!)});
+  const [isQuestionOpen, setIsQuestionOpen] = useState(false);
 
-  const create = async () => {
-    post<CreationResponse>(`/organizations/${organization_id}/votes`, { body: data }).then((res) => {
-      nav(`/organizations/${organization_id}`);
-    }).catch(reason => {
-      console.log(reason);
+  const create = () => {
+    fetch(`/organizations/${organization_id}/votes`, {method: "POST", headers:{"Content-Type": "application/json"}, body: JSON.stringify(vote)}).then(res => {
+      if (res.status !== 200) {
+        res.text().then(e => message.error(e)).catch(e => message.error(e));
+        return;
+      }
+      nav(`/organizations/${organization_id}/votes`);
     })
   }
 
-  return <div>
-    {alert !== "" && <Alert type="error" message={alert} banner={true} />}
-    <Input placeholder="Name" onChange={(e) => { setData({ ...data, name: e.target.value }) }} />
-    {/* <DatePicker value={data.deadline} onChange={(date) => { setData({ ...data, deadline: date }) }} /> */}
-    <Button onClick={() => { create().catch((r) => { setAlert(r) }) }}>Create</Button>
+  const setQuestions =(questions: QuestionCreateModel[]) => {
+    setVote(prev => ({ ...prev, questions: questions }))
+  }
 
-  </div>
+
+  const addQuestionButtonStyle = {
+    marginBottom: "30px",
+  }
+
+  const steps = [
+    {
+      title: "Create a Vote",
+      content: (<CreateVoteComponent data={vote} setData={setVote}/>)
+    },
+    {
+      title: "Add Some Questions",
+      content: (<div>
+        <Button style={addQuestionButtonStyle} type='primary' onClick={() => setIsQuestionOpen(true)}>Add a Question</Button>
+        <Upsert isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} push={(q) => {setVote(prev => {
+          const questions = [...prev.questions];
+          questions.push(q);
+          return {...prev, questions: questions}
+        })}} />
+        <QuestionListForCreateComponent questions={vote.questions} setQuestions={setQuestions}/>
+      </div>)
+    },
+    {
+      title: "Preview And Publish",
+      content: (<div>
+        <Card>
+          <Descriptions>
+            <Descriptions.Item label="Name">{vote.name}</Descriptions.Item>
+            <Descriptions.Item label="Deadline">{vote.deadline}</Descriptions.Item>
+            <Descriptions.Item label="Visibility">{vote.visibility}</Descriptions.Item>
+          </Descriptions>
+        </Card>
+        <Divider orientation="left">Questions</Divider>
+        <Row gutter={16}>
+          { vote.questions.map(q => (
+          <Col span={8}>
+            <Card>
+              <Descriptions style={{display: "flex"}} >
+                <Descriptions.Item style={{display: "flex"}}label="Description">{q.description}</Descriptions.Item>
+                <Descriptions.Item style={{display: "flex"}}label="Type">{q.type_}</Descriptions.Item>
+              </Descriptions>
+              <List bordered={true}>
+                { q.options.map(o => (<List.Item>{o.option}</List.Item>)) }
+              </List>
+            </Card>
+          </Col>)) }
+        </Row>
+      </div>)
+    }
+  ]
+
+  const items = steps.map(v => ({title: v.title, key: v.title}))
+
+
+  return <Layout>
+    <Steps className="Steps" current={current} items={items} />
+    {steps[current].content}
+    <Row className="ButtonRow" style={{justifyContent: "space-between"}}>
+      { current > 0 && <Button onClick={() => setCurrent(prev => prev - 1)}>Previous</Button> }
+      { current < items.length - 1 && <Button onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
+      { current === steps.length - 1 && <Button type='primary' onClick={create}>Publish</Button>}
+    </Row>
+  </Layout>
 }
 
 export const VoteList = () => {

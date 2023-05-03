@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react"
 import { get, delete_, post } from "../utils/api";
-import { List as CList, Button, Table, Form, Input, message } from "antd";
+import { List as CList, Button, Table, Form, Input, message, Card, Typography, Row, Descriptions } from "antd";
 import { AlertProps } from "../wrapper/alert";
 import { List as ResponseList } from "../utils/response";
 import { useNavigate } from "react-router";
@@ -11,22 +11,38 @@ import { Layout } from "../layout/layout";
 import "./organization.css";
 import { debug } from "console";
 import { createSearchParams } from "react-router-dom";
+import { DeleteButton } from "../widgets/delete-button";
 
 type Item = {
 	id: number,
 	name: string,
+	version: string,
+	description: string,
 }
 
 export const Detail = ({ organization_id }: { organization_id: string }) => {
-	const [data, setData] = useState<Item>({ id: 0, name: "" });
+	const [data, setData] = useState<Item>();
 	useEffect(() => {
-		get<Item>(`/organizations/${organization_id}`).then(res => setData(res)).catch(e => { throw e });
-
+		fetch(`/organizations/${organization_id}`)
+		.then(res => {
+			if (res.status !== 200) {
+				res.text()
+				.then(e => message.error(e))
+				.catch(e => message.error(e));
+				return;
+			}
+			res.json().then(org => setData(org)).catch(e => message.error(e));
+		})
+		.catch(e => message.error(e));
 	}, [organization_id]);
-	return <CList split={true}>
-		<div><label>ID: </label><span>{data.id}</span></div>
-		<div><label>Name: </label><span>{data.name}</span></div>
-	</CList>
+	return <Card>
+		<Descriptions>
+			<Descriptions.Item label="ID">{data?.id}</Descriptions.Item>
+			<Descriptions.Item label="Name">{data?.name}</Descriptions.Item>
+			<Descriptions.Item label="Version">{data?.version}</Descriptions.Item>
+			<Descriptions.Item label="Description">{data?.description}</Descriptions.Item>
+		</Descriptions>
+	</Card>
 
 }
 
@@ -45,16 +61,6 @@ export const List = ({ setError }: ErrorProps) => {
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
 
-
-	const del = async (id: number) => {
-		setLoading!(true);
-		delete_(`/organizations/${id}`).then(() => {
-		}).catch((reason) => {
-			setError(reason);
-		}).finally(() => {
-			setLoading && setLoading(false);
-		})
-	}
 
 	const columns = [
 		{
@@ -82,9 +88,9 @@ export const List = ({ setError }: ErrorProps) => {
 			title: "Actions",
 			key: "actions",
 			render: ({ id }: { id: number }) => {
-				return <div>
+				return <div className="ActionButtonGroup">
 					<Button onClick={(e) => { e.stopPropagation(); nav(`/organizations/${id}/update`) }}>Edit</Button>
-					<Button onClick={(e) => { e.stopPropagation(); del(id) }}>Delete</Button>
+					<DeleteButton content="Deleting this organization will cause all votes which related to this organization be deleted" deleteURL={`/organizations/${id}`} />
 				</div >
 			}
 		}
@@ -120,7 +126,7 @@ export const List = ({ setError }: ErrorProps) => {
 	}
 
 	return <Layout>
-		<Button type="primary" onClick={create}>Create</Button>
+		<Button className='CreateButton' type="primary" onClick={create}>Create</Button>
 		<Table columns={columns} dataSource={orgs} pagination={{total: total, current: page, pageSize: 20, onChange: (page) => {setPage(page)}}} onRow={(data) => {
 			return {
 				onClick: () => {
@@ -135,38 +141,31 @@ interface Organization {
 	name: string
 }
 
-export const Create = ({setLoading, setAlert}: LoadingProps & AlertProps) => {
-	setLoading(false);
+export const Create = () => {
 	const nav = useNavigate();
-	const [org, setOrg] = useState<Organization>({name: ""});
-	const [disable, setDisable] = useState(false);
-	const create = () => {
-		setDisable(true);
-		setLoading(true);
-		post("/organizations", {body: org}).then(() => {
-			setAlert({type: "success", message: "success create"});
-			setTimeout(() => {
-				setAlert(null);
-				nav("/organizations");
-			}, 2000);
-		}).catch(reason => {
-			if (reason.status === 401) {
-				nav("/login");
-				return
+	const create = (values: any) => {
+		fetch("/organizations", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(values),
+		})
+		.then(res => {
+			switch (res.status) {
+				case 200:
+					message.success("Successfully created");
+					nav("/organizations");
+					return;
+				case 401:
+					nav("/login");
+					return;
+				default:
+					res.text().then(e => message.error(e)).catch(e => message.error(e))
 			}
-			setAlert({type: "error", message: `${reason}`});
-			setTimeout(() => {
-				setAlert(null);
-			}, 2000);
-		}).finally(() => {
-			setDisable(false);
-			setLoading(false);
-		});
+		})
 	}
-	return <Form>
-		<Form.Item label="Name">
-			<Input onChange={(e) => setOrg({...org, name: e.target.value})} />
-		</Form.Item>
-		<Button onClick={() => {setDisable(true); create()}} disabled={disable} >Create</Button>
-	</Form>
+	return <Form onFinish={create}>
+				<Form.Item name="name" className='InputName' ><Input placeholder="Name" /></Form.Item>
+				<Form.Item name="description" className='InputDesc'><Input.TextArea  placeholder='Description' rows={10}/></Form.Item>
+				<Form.Item><Button type='primary' htmlType='submit'>Create</Button></Form.Item>
+			</Form>
 }

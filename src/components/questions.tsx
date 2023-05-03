@@ -1,9 +1,7 @@
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
-import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table } from "antd";
+import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table, Modal, TableColumnProps } from "antd";
 import { useNavigate } from "react-router";
-import "antd/dist/antd.css";
-import { RadioGroup } from "@material-ui/core";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { QuestionType } from "../models/question";
 import { Option } from "../models/opt";
@@ -12,8 +10,11 @@ import { Question } from "../models/question";
 import { question as fetch_question} from "../apis/question";
 import { options_within_question } from "../apis/options";
 import { answers_of_question, submit_answer } from "../apis/answer";
-import { debug } from "console";
 import { Create as QuestionCreateModel } from "../models/question";
+import { List as OptionListComponent } from "./options";
+import "./questions.css"
+import { ColumnType, ExpandableConfig } from "antd/es/table/interface";
+
 
 type Item = {
   id: number,
@@ -267,4 +268,160 @@ export const Filling = ({ question_id }: FillingProps) => {
       <Button onClick={() => submit_answer(question_id, question.answer).then(_=>message.success('submit answer successfully')).catch(e => message.error(e))}>提交</Button>
     </div>
     : <></>}</>
+}
+
+interface UpsertProps  {
+  initData?: QuestionCreateModel,
+  set?: Dispatch<SetStateAction<QuestionCreateModel>> | ((question: QuestionCreateModel) => void),
+  push?: (question: QuestionCreateModel) => void,
+  isOpen: boolean,
+  setIsOpen: Dispatch<SetStateAction<boolean>>,
+}
+
+export const Upsert = ({initData, set, push, isOpen, setIsOpen}: UpsertProps) => {
+  const [question, setQuestion] = useState(initData || {description: "", type_: QuestionType.SINGLE, options: new Array()})
+  const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const [option, setOption] = useState("");
+
+  useEffect(() => {
+    initData && setQuestion(initData);
+  }, [initData])
+
+  const columns = [
+    {
+      title: "Option",
+      key: "option",
+      dataIndex: "option"
+    },
+    {
+      title: "Action",
+      render: (i: number) => {
+        return <Row>
+          <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
+          <Button>Edit</Button>
+        </Row>
+      }
+    }
+  ]
+
+  const addOption = () => {
+    setQuestion(prev => { 
+      const options = [...prev.options]; 
+      options.push({option: option}); 
+      return { ...prev, options: options}}); 
+      setIsOptionOpen(false);
+  }
+
+  const onOk = () => {
+    if (set) {
+      set(question);
+    } else {
+      push!(question)
+    }
+    setIsOpen(false);
+  }
+
+  const modalStyle = {
+    paddingLeft: "30px"
+  }
+
+  const descriptionStyle = {
+    display: "block",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
+
+  const typeStyle = {
+    display: "flex",
+    justifyContent: "space-evenly",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
+
+  const buttonRowStyle = {
+    marginTop: "30px",
+    marginBottom: "30px",
+    justifyContent: "end",
+  }
+
+  return <Modal width="600px" open={isOpen} closable={false} onOk={onOk} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
+    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
+    <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
+      <Radio value='SINGLE'>Single</Radio>
+      <Radio value='MULTI'>Multiple</Radio>
+    </Radio.Group>
+    <Row style={buttonRowStyle}>
+      <Button type="primary" onClick={() => {setIsOptionOpen(true)}}>Add a Option</Button>
+    </Row>
+    <Modal open={isOptionOpen} closable={false} onOk={addOption}>
+      <Input title="Option" onChange={(e) => {setOption(e.target.value)}}/>
+    </Modal>
+    <Table dataSource={question.options} columns={columns} />
+  </Modal>
+}
+
+interface ListForCreateProps {
+  questions: QuestionCreateModel[],
+  setQuestions: (questions: QuestionCreateModel[]) => void,
+}
+
+export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [idx, setIdx] = useState<number>();
+  const [editing, setEditing] = useState<QuestionCreateModel>();
+
+  useEffect(() => {
+    if (idx !== undefined) {
+      setEditing(questions[idx]);
+    }
+  }, [idx])
+
+  const set = useCallback((question: QuestionCreateModel) => {
+    if (idx !== undefined) {
+      questions[idx] = question; 
+      setQuestions(questions);
+      setIdx(undefined);
+    }
+  }, [idx])
+
+  const columns: ColumnType<QuestionCreateModel>[] = [
+    {
+      title: "Description",
+      key: "description",
+      dataIndex: "description",
+    },
+    {
+      title: "Type",
+      key: "type_",
+      dataIndex: "type_",
+    },
+    {
+      title: "Action",
+      render: (_, item, i) => {
+        return <Row>
+          <Button onClick={() => {setIdx(i); setIsOpen(true)}}>Edit</Button>
+          <Button danger={true} onClick={() => {questions.splice(i); setQuestions(questions)}}>Delete</Button>
+        </Row>
+      }
+    }
+  ]
+
+  const expandableConfig: ExpandableConfig<QuestionCreateModel> = {
+    expandedRowRender: (record) => {
+      const columns = [
+        {
+          title: "Option",
+          key: "option",
+          dataIndex: "option",
+        }
+      ]
+      return <Table pagination={false} dataSource={record.options} columns={columns} />
+    },
+  }
+
+  return <div>
+    <Upsert initData={editing} isOpen={isOpen} setIsOpen={setIsOpen} set={set}/>
+    <Table expandable={expandableConfig} dataSource={questions.map((q, i) => ({...q, key: i.toString()}))} columns={columns} pagination={false}/>
+  </div>
+  
 }

@@ -5,7 +5,6 @@ import { Alert as AlertModel } from "../models/alert";
 import { Detail as QuestionDetail, Create as QuestionCreateModel, Question as QuestionModel, QuestionType} from "../models/question";
 import { Create as OptCreate, Option } from "../models/opt";
 import { get, post, put, delete_ } from "../utils/api";
-import "antd/dist/antd.css";
 import { List as CQuestionList } from "../components/questions";
 import { AddModal, List as OptionList } from "../components/options";
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, SetStateAction, Dispatch } from "reac
 import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table } from "antd";
 import Item from "antd/lib/list/Item";
 import { delete_option, options_within_question, add_options } from "../apis/options";
-import { Option } from "../models/opt";
+import { Option, Create } from "../models/opt";
 import { useNavigate } from "react-router";
 
 interface AddModalProps  {
@@ -56,7 +56,7 @@ type ListResponse = {
 
 interface ListProps {
 	questionID?: number
-	options?: Option[]
+	options?: Option[] 
 	refresh?: number
 	setRefresh?: Dispatch<SetStateAction<number>>
 }

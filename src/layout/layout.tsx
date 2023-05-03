@@ -59,12 +59,14 @@ export const Layout = <P, >({children}: PropsWithChildren<P>) => {
                 <Navbar />
                 <div className="Middle">
                     <div className='SideMenu'>
-                        <Menu className='Menu'>
-                            <Menu.Item><Link to='/organizations/search'>Organziations</Link></Menu.Item>
-                            <Menu.Item><Link to='/votes/search'>Votes</Link></Menu.Item>
-                            <Menu.Item><Link to='/questions/search'>Questions</Link></Menu.Item>
-                            <Menu.Item><Link to='/answers/search'>Answers</Link></Menu.Item>
-                        </Menu>
+                        <div className='Menu'>
+                            <Menu>
+                                <Menu.Item><Link to='/organizations/search'>Organziations</Link></Menu.Item>
+                                <Menu.Item><Link to='/votes/search'>Votes</Link></Menu.Item>
+                                <Menu.Item><Link to='/questions/search'>Questions</Link></Menu.Item>
+                                <Menu.Item><Link to='/answers/search'>Answers</Link></Menu.Item>
+                            </Menu>
+                        </div>
                     </div>
                     <div className='Content'>
                         { children }

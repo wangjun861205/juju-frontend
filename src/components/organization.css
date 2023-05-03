@@ -1,2 +1,24 @@
-Table {
+.CreateButton {
+    margin-bottom: 40px;
+    margin-right: 60px;
+    border-radius: 5px;
+    float: right;
+}
+
+.InputName, .InputDesc {
+    width: 60%;
+}
+
+.ActionButtonGroup {
+    text-align: center;
+}
+
+.ActionButtonGroup > Button {
+    margin-right: 10px;
+    border-radius: 5px;
+}
+
+.InfoRow {
+    display: flex;
+    justify-content: space-evenly;
 }
