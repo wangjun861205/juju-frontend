@@ -14,6 +14,9 @@ import { Create as QuestionCreateModel } from "../models/question";
 import { List as OptionListComponent } from "./options";
 import "./questions.css"
 import { ColumnType, ExpandableConfig } from "antd/es/table/interface";
+import { Upload } from "./upload";
+import { Upsert as OptionUpsert} from "./options";
+
 
 
 type Item = {
@@ -276,9 +279,11 @@ interface UpsertProps  {
   push?: (question: QuestionCreateModel) => void,
   isOpen: boolean,
   setIsOpen: Dispatch<SetStateAction<boolean>>,
+  imageSet: string[][],
+  setImageSet: Dispatch<SetStateAction<string[][]>>,
 }
 
-export const Upsert = ({initData, set, push, isOpen, setIsOpen}: UpsertProps) => {
+export const Upsert = ({initData, set, push, isOpen, setIsOpen, imageSet, setImageSet}: UpsertProps) => {
   const [question, setQuestion] = useState(initData || {description: "", type_: QuestionType.SINGLE, options: new Array()})
   const [isOptionOpen, setIsOptionOpen] = useState(false);
   const [option, setOption] = useState("");
@@ -355,6 +360,7 @@ export const Upsert = ({initData, set, push, isOpen, setIsOpen}: UpsertProps) =>
     </Row>
     <Modal open={isOptionOpen} closable={false} onOk={addOption}>
       <Input title="Option" onChange={(e) => {setOption(e.target.value)}}/>
+      <Upload />
     </Modal>
     <Table dataSource={question.options} columns={columns} />
   </Modal>

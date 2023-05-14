@@ -1,5 +1,5 @@
 import { Upload as AntdUpload, Image, List, Row } from 'antd';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 
 export interface UploadProps {
@@ -8,7 +8,9 @@ export interface UploadProps {
 }
 export const Upload = ({ images, setImages }: UploadProps) => {
   return <>
-    <Row>{images.map(data => <Image src={`data:image/jpeg;base64,${data}`} />)}</Row>
+    <Row>{images.map((data, i) => <Image onDoubleClick={() => {setImages(prev => {
+      return prev.splice(i);
+    })}} src={`data:image/jpeg;base64,${data}`} />)}</Row>
     <AntdUpload accept='image/jpeg,image/png' beforeUpload={file => {
       const reader = new FileReader();
       reader.onload = (event) => {

@@ -4,6 +4,7 @@ import Item from "antd/lib/list/Item";
 import { delete_option, options_within_question, add_options } from "../apis/options";
 import { Option, Create } from "../models/opt";
 import { useNavigate } from "react-router";
+import { Upload } from "./upload";
 
 interface AddModalProps  {
 	visible: boolean,
@@ -126,4 +127,31 @@ export const MultiSelect = (props: { options: Item[], answer: number[], setAnswe
 	return <div>
 		<Checkbox.Group options={props.options.map(o => { return { label: o.option, value: o.id } })} value={props.answer} onChange={(values) => { props.setAnswer(values.map(v => { return v as number })) }}></Checkbox.Group>
 	</div>
+}
+
+interface UpsertProps {
+	option: Option
+	onOk: (option: Option) => void,
+	isOpen: boolean,
+	setIsOpen: Dispatch<SetStateAction<boolean>>,
+
+}
+
+export const Upsert = ({option, onOk, isOpen, setIsOpen}: UpsertProps) => {
+	const [opt, setOpt] = useState<Option>(option);
+	const setImages: Dispatch<SetStateAction<string[]>> = (value: SetStateAction<string[]>) => { 
+		if (typeof value === "function") {
+			setOpt(prev => {
+				return {...prev, images: value(prev.images)}
+			});
+			return
+		}
+		setOpt(prev => {
+			return {...prev, images: value}
+		});
+	}
+	return <Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true}>
+		<Input placeholder="Option" onChange={(event) => {setOpt(prev => {return {...prev, option: event.target.value }})}}/>
+		<Upload images={option.images} setImages={setImages} />
+	</Modal>
 }
