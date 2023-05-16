@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, SetStateAction, Dispatch } from "react";
-import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table } from "antd";
+import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table, Image } from "antd";
 import Item from "antd/lib/list/Item";
 import { delete_option, options_within_question, add_options } from "../apis/options";
-import { Option, Create } from "../models/opt";
+import { Option, Create as OptionCreate } from "../models/opt";
 import { useNavigate } from "react-router";
 import { Upload } from "./upload";
 
@@ -56,44 +56,23 @@ type ListResponse = {
 }
 
 interface ListProps {
-	questionID?: number
-	options?: Option[] 
-	refresh?: number
-	setRefresh?: Dispatch<SetStateAction<number>>
+	options: Option[] 
+	setOptions: Dispatch<SetStateAction<Option[]>>,
 }
 
 
 
-export const List = ({ questionID, options: _options, refresh, setRefresh }: ListProps) => {
-	const [options, setOptions] = useState<Option[]>();
+export const List = ({ options, setOptions }: ListProps) => {
 	const nav = useNavigate();
-
 	const remove = (id: number) => {
-		delete_option(id)
-		.then(_ => setRefresh && setRefresh(o => Math.abs(o-1)) )
-		.catch(err => {
-			message.error(err);
-		})
+		const idx = options.findIndex(o => o.id === id);
+		setOptions(prev => {
+			prev.splice(idx, 1);
+			return [...prev];
+		});
 	}
 
-	useEffect(() => {
-		if (questionID) {
-			options_within_question(questionID)
-			.then(opts => setOptions(opts))
-			.catch(err => {
-				message.error(err);
-				nav(-1);
-			})
-			return
-		}
-		if (!_options) {
-			throw "must provide one of questionID or options"
-		}
-		setOptions(_options);
-	}, [questionID, _options, refresh])
-
-	return <div>
-		<Table columns={[
+	return <Table columns={[
 			{
 				key: 'id',
 				title: 'ID',
@@ -105,6 +84,14 @@ export const List = ({ questionID, options: _options, refresh, setRefresh }: Lis
 				dataIndex: 'option',
 			},
 			{
+				key: 'images',
+				title: 'Images',
+				dataIndex: 'images',
+				render: (_, record) => {
+					return <Row>{ record.images.map(img => { return <Image src={`image/jpeg; base64, ${img}`} /> }) }</Row>
+				}
+			},
+			{
 				key: 'action',
 				title: 'Action',
 				render: (_, record) => {
@@ -112,7 +99,6 @@ export const List = ({ questionID, options: _options, refresh, setRefresh }: Lis
 				}
 			}
 		]} dataSource={options}/>
-	</div >
 }
 
 
@@ -153,5 +139,34 @@ export const Upsert = ({option, onOk, isOpen, setIsOpen}: UpsertProps) => {
 	return <Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true}>
 		<Input placeholder="Option" onChange={(event) => {setOpt(prev => {return {...prev, option: event.target.value }})}}/>
 		<Upload images={option.images} setImages={setImages} />
+	</Modal>
+}
+
+interface CreateProps {
+	push: (option: Option) => void
+	isOpen: boolean,
+	setIsOpen: Dispatch<SetStateAction<boolean>>,
+}
+
+export const Create = ({push, isOpen, setIsOpen}: CreateProps) => {
+	const [option, setOption] = useState<Option>({id: 0, option: "", images: []});
+	const setOpt = (opt: string) => {
+		setOption(prev => {
+			return {...prev, option: opt}
+		})
+	}
+	const setImages: Dispatch<SetStateAction<string[]>> = (action: SetStateAction<string[]>) => {
+		if (typeof action === "function") {
+			setOption(prev => {
+				return {...prev, images: action(prev.images)}});
+			return
+		}
+		setOption(prev => {
+			return {...prev, images: action}
+		});
+	}
+	return <Modal open={isOpen} onOk={() => {push(option); setIsOpen(false)}} destroyOnClose={true}>
+	<Input placeholder="Option" onChange={(event) => { setOpt(event.target.value) }} ></Input>
+	<Upload images={option.images} setImages={setImages} />
 	</Modal>
 }
