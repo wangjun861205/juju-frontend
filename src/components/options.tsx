@@ -143,13 +143,12 @@ export const Upsert = ({option, onOk, isOpen, setIsOpen}: UpsertProps) => {
 }
 
 interface CreateProps {
-	push: (option: Option) => void
-	isOpen: boolean,
-	setIsOpen: Dispatch<SetStateAction<boolean>>,
+	setOptions: Dispatch<SetStateAction<Option[]>>,
 }
 
-export const Create = ({push, isOpen, setIsOpen}: CreateProps) => {
+export const Create = ({setOptions}: CreateProps) => {
 	const [option, setOption] = useState<Option>({id: 0, option: "", images: []});
+	const [isOpen, setIsOpen] = useState(false);
 	const setOpt = (opt: string) => {
 		setOption(prev => {
 			return {...prev, option: opt}
@@ -165,8 +164,11 @@ export const Create = ({push, isOpen, setIsOpen}: CreateProps) => {
 			return {...prev, images: action}
 		});
 	}
-	return <Modal open={isOpen} onOk={() => {push(option); setIsOpen(false)}} destroyOnClose={true}>
-	<Input placeholder="Option" onChange={(event) => { setOpt(event.target.value) }} ></Input>
-	<Upload images={option.images} setImages={setImages} />
-	</Modal>
+	return <div>
+		<Button onClick={() => {setIsOpen(true)}}><span>Add Option</span></Button>
+		<Modal open={isOpen} onOk={() => {setOptions(old => {return [...old, option]}); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
+			<Input placeholder="Option" onChange={(event) => { setOpt(event.target.value) }} ></Input>
+			<Upload images={option.images} setImages={setImages} />
+		</Modal>
+		</div>
 }

@@ -147,12 +147,6 @@ export const Update = ({question, setQuestion}: UpdateProps) => {
     })
   }
 
-  const pushOption = (option: Option) => {
-    setOptions(old => {
-      return [...old, option]
-    })
-  }
-
 
   const typeOptions = [
     { label: "Single", value: QuestionType.SINGLE },
@@ -161,8 +155,7 @@ export const Update = ({question, setQuestion}: UpdateProps) => {
   return <div>
     <Input value={question.description} onChange={(event) =>setDescription(event.target.value)} />
     <Select options={typeOptions} onChange={(event) => { setType_(event.target.value) }} />
-    <Button type="primary" onClick={() => {setIsOptionModalOpen(true)}}>Add Option</Button>
-    <OptionCreate push={pushOption} isOpen={isOptionModalOpen} setIsOpen={setIsOptionModalOpen} />
+    <OptionCreate setOptions={setOptions}/>
     <OptionList options={question.options} setOptions={setOptions}/>
   </div>
 }
