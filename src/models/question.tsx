@@ -27,7 +27,7 @@ export type ListItem = {
 export type Create = {
   description: string,
   type_: QuestionType,
-  options: OptionCreate[],
+  options: Option[],
 }
 
 export type Detail = {

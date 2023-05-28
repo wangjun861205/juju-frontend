@@ -299,94 +299,101 @@ export const Filling = ({ question_id }: FillingProps) => {
 
 
 interface UpsertProps  {
-  initData?: QuestionCreateModel,
-  set?: Dispatch<SetStateAction<QuestionCreateModel>> | ((question: QuestionCreateModel) => void),
-  push?: (question: QuestionCreateModel) => void,
+  question: Question,
+  setQuestion: Dispatch<SetStateAction<Question>>,
   isOpen: boolean,
   setIsOpen: Dispatch<SetStateAction<boolean>>,
-  imageSet: string[][],
-  setImageSet: Dispatch<SetStateAction<string[][]>>,
 }
 
-// export const Upsert = ({initData, set, push, isOpen, setIsOpen, imageSet, setImageSet}: UpsertProps) => {
-//   const [question, setQuestion] = useState(initData || {description: "", type_: QuestionType.SINGLE, options: new Array()})
-//   const [isOptionOpen, setIsOptionOpen] = useState(false);
-//   const [option, setOption] = useState("");
 
-//   useEffect(() => {
-//     initData && setQuestion(initData);
-//   }, [initData])
+export const Upsert = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) => {
+  const [opens, setOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
 
-//   const columns = [
-//     {
-//       title: "Option",
-//       key: "option",
-//       dataIndex: "option"
-//     },
-//     {
-//       title: "Action",
-//       render: (i: number) => {
-//         return <Row>
-//           <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
-//           <Button>Edit</Button>
-//         </Row>
-//       }
-//     }
-//   ]
+  const columns = [
+    {
+      title: "Option",
+      key: "option",
+      dataIndex: "option"
+    },
+    {
+      title: "Action",
+      render: (i: number) => {
+        return <Row>
+          <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
+          <Button>Edit</Button>
+        </Row>
+      }
+    }
+  ]
 
-//   const addOption = () => {
-//     setQuestion(prev => { 
-//       const options = [...prev.options]; 
-//       options.push({option: option}); 
-//       return { ...prev, options: options}}); 
-//       setIsOptionOpen(false);
-//   }
 
-//   const onOk = () => {
-//     if (set) {
-//       set(question);
-//     } else {
-//       push!(question)
-//     }
-//     setIsOpen(false);
-//   }
+  const modalStyle = {
+    paddingLeft: "30px"
+  }
 
-//   const modalStyle = {
-//     paddingLeft: "30px"
-//   }
+  const descriptionStyle = {
+    display: "block",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
 
-//   const descriptionStyle = {
-//     display: "block",
-//     marginTop: "30px",
-//     marginBottom: "30px",
-//   }
+  const typeStyle = {
+    display: "flex",
+    justifyContent: "space-evenly",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
 
-//   const typeStyle = {
-//     display: "flex",
-//     justifyContent: "space-evenly",
-//     marginTop: "30px",
-//     marginBottom: "30px",
-//   }
+  const buttonRowStyle = {
+    marginTop: "30px",
+    marginBottom: "30px",
+    justifyContent: "end",
+  }
 
-//   const buttonRowStyle = {
-//     marginTop: "30px",
-//     marginBottom: "30px",
-//     justifyContent: "end",
-//   }
-
-//   return <Modal width="600px" open={isOpen} closable={false} onOk={onOk} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
-//     <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
-//     <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
-//       <Radio value='SINGLE'>Single</Radio>
-//       <Radio value='MULTI'>Multiple</Radio>
-//     </Radio.Group>
-//     <Row style={buttonRowStyle}>
-//       <Button type="primary" onClick={() => {setIsOptionOpen(true)}}>Add a Option</Button>
-//     </Row>
-//     <OptionUpsert option={}/>
-//     <Table dataSource={question.options} columns={columns} />
-//   </Modal>
-// }
+  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
+    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
+    <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
+      <Radio value='SINGLE'>Single</Radio>
+      <Radio value='MULTI'>Multiple</Radio>
+    </Radio.Group>
+    <Row style={buttonRowStyle}>
+      <Button type="primary" onClick={() => {}}>Add a Option</Button>
+    </Row>
+    { question.options.map((o, i) => { 
+      return <OptionUpsert 
+              option={o} 
+              key={i} 
+              setOption={
+                (action: SetStateAction<Option>) => { 
+                  setQuestion((prev) => {
+                    if (typeof action === "function") {
+                      const options = [...prev.options];
+                      options[i] = action(options[i]);
+                      return {...prev, options};
+                    }
+                    return {...prev, options: {...prev.options, [i]: action}}
+                  })
+                }}
+                isOpen={opens[i]}
+                setIsOpen={(action: SetStateAction<boolean>) => {
+                  if (typeof action === 'function') {
+                    setOpens(prev => {
+                      const next_opens = [...opens];
+                      next_opens[i] = action(next_opens[i]);
+                      return next_opens;
+                    })
+                    return 
+                  }
+                  setOpens(prev => {
+                    const next_opens = [...opens];
+                    next_opens[i] = action;
+                    return next_opens;
+                  })
+                }}/> })
+    }
+    <Table dataSource={question.options} columns={columns} />
+  </Modal>
+}
 
 interface ListForCreateProps {
   questions: QuestionCreateModel[],
