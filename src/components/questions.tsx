@@ -15,7 +15,7 @@ import { List as OptionListComponent } from "./options";
 import "./questions.css"
 import { ColumnType, ExpandableConfig } from "antd/es/table/interface";
 import { Upload } from "./upload";
-import { Upsert as OptionUpsert, List as OptionList, Create as OptionCreate } from "./options";
+import { Update as OptionUpdate, List as OptionList, Create as OptionCreate } from "./options";
 
 
 
@@ -110,94 +110,6 @@ export const Detail = ({ question_id }: { question_id: number }) => {
   </div >
 }
 
-type QuestionUpdate = {
-  description: string,
-  type_: "Single" | "Multi",
-}
-
-interface UpdateProps {
-  question: Question,
-  setQuestion: Dispatch<SetStateAction<Question>>,
-}
-
-export const Update = ({question, setQuestion}: UpdateProps) => {
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  const setDescription = (description: string) => {
-    setQuestion(old => {
-      return { ...old, description: description }
-    })
-  }
-
-  const setType_ = (type_: QuestionType) => {
-    setQuestion(old => {
-      return { ...old, type_: type_ }
-    })
-  }
-
-  const setOptions: Dispatch<SetStateAction<Option[]>> = (action: SetStateAction<Option[]>) => {
-    if (typeof action === "function") {
-      setQuestion(old => {
-        return { ...old, options: action(old.options) }
-      });
-      return
-    }
-    setQuestion(old => {
-      return { ...old, options: action }
-    })
-  }
-
-
-  const typeOptions = [
-    { label: "Single", value: QuestionType.SINGLE },
-    { label: "Multi", value: QuestionType.MULTI }
-  ]
-  return <div>
-    <Input value={question.description} onChange={(event) =>setDescription(event.target.value)} />
-    <Select options={typeOptions} onChange={(event) => { setType_(event.target.value) }} />
-    <OptionCreate setOptions={setOptions}/>
-    <OptionList options={question.options} setOptions={setOptions}/>
-  </div>
-}
-
-type QuestionCreate = {
-  description: string,
-  type_: "Single" | "Multi",
-}
-
-interface CreateProps {
-  question: QuestionCreateModel | undefined,
-  setQuestion: Dispatch<SetStateAction<QuestionCreateModel | undefined>>,
-}
-
-export const Create = ({question, setQuestion}: CreateProps) => {
-  return <div>
-    <Input 
-      value={question?.description} 
-      placeholder="Description" 
-      onChange={
-        (event) => { 
-          setQuestion(old => { 
-            if (!old) return old; 
-            return { ...old, description: event.target.value } 
-          }) 
-        }
-      } />
-    <Select 
-      options={
-        [
-          { label: "Single", value: QuestionType.SINGLE }, 
-          { label: "Multi", value: QuestionType.MULTI }
-        ]
-      } 
-      value={question?.type_} 
-      onChange={(value) => { setQuestion(old => { 
-        if (!old) return old;
-        return { ...old, type_: value}
-      }) }} />
-  </div>
-
-}
 
 export type _Report = {
   question: string,
@@ -306,7 +218,7 @@ interface UpsertProps  {
 }
 
 
-export const Upsert = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) => {
+export const Update = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) => {
   const [opens, setOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
 
   const columns = [
@@ -360,7 +272,7 @@ export const Upsert = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) 
       <Button type="primary" onClick={() => {}}>Add a Option</Button>
     </Row>
     { question.options.map((o, i) => { 
-      return <OptionUpsert 
+      return <OptionUpdate 
               option={o} 
               key={i} 
               setOption={
@@ -458,4 +370,100 @@ export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => 
     <Table expandable={expandableConfig} dataSource={questions.map((q, i) => ({...q, key: i.toString()}))} columns={columns} pagination={false}/>
   </div>
   
+}
+
+interface CreateProps  {
+  isOpen: boolean,
+  setIsOpen: Dispatch<SetStateAction<boolean>>,
+  onOk: (question: Question) => void,
+}
+
+export const Create = ({isOpen, setIsOpen, onOk}: CreateProps) => {
+  const [question, setQuestion] = useState<Question>({id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0})
+  const [optionOpens, setOptionOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
+
+  const columns = [
+    {
+      title: "Option",
+      key: "option",
+      dataIndex: "option"
+    },
+    {
+      title: "Action",
+      render: (i: number) => {
+        return <Row>
+          <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
+          <Button>Edit</Button>
+        </Row>
+      }
+    }
+  ]
+
+
+  const modalStyle = {
+    paddingLeft: "30px"
+  }
+
+  const descriptionStyle = {
+    display: "block",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
+
+  const typeStyle = {
+    display: "flex",
+    justifyContent: "space-evenly",
+    marginTop: "30px",
+    marginBottom: "30px",
+  }
+
+  const buttonRowStyle = {
+    marginTop: "30px",
+    marginBottom: "30px",
+    justifyContent: "end",
+  }
+
+  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
+    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
+    <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
+      <Radio value='SINGLE'>Single</Radio>
+      <Radio value='MULTI'>Multiple</Radio>
+    </Radio.Group>
+    <Row style={buttonRowStyle}>
+      <Button type="primary" onClick={() => {}}>Add a Option</Button>
+    </Row>
+    { question.options.map((o, i) => { 
+      return <OptionUpdate 
+              option={o} 
+              key={i} 
+              setOption={
+                (action: SetStateAction<Option>) => { 
+                  setQuestion((prev) => {
+                    if (typeof action === "function") {
+                      const options = [...prev.options];
+                      options[i] = action(options[i]);
+                      return {...prev, options};
+                    }
+                    return {...prev, options: {...prev.options, [i]: action}}
+                  })
+                }}
+                isOpen={opens[i]}
+                setIsOpen={(action: SetStateAction<boolean>) => {
+                  if (typeof action === 'function') {
+                    setOpens(prev => {
+                      const next_opens = [...opens];
+                      next_opens[i] = action(next_opens[i]);
+                      return next_opens;
+                    })
+                    return 
+                  }
+                  setOpens(prev => {
+                    const next_opens = [...opens];
+                    next_opens[i] = action;
+                    return next_opens;
+                  })
+                }}/> })
+    }
+    <Table dataSource={question.options} columns={columns} />
+  </Modal>
 }

@@ -11,7 +11,7 @@ import {
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { get, post, fetch_list } from "../utils/api";
-import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent} from "../components/questions";
+import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent, Create as QuestionCreate} from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
@@ -74,11 +74,11 @@ export const CreateVote = () => {
       title: "Add Some Questions",
       content: (<div>
         <Button style={addQuestionButtonStyle} type='primary' onClick={() => setIsQuestionOpen(true)}>Add a Question</Button>
-        {/* <Upsert isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} push={(q: any) => {setVote(prev => {
+        <QuestionCreate isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} push={(q: any) => {setVote(prev => {
           const questions = [...prev.questions];
           questions.push(q);
           return {...prev, questions: questions}
-        })}} imageSet={imageSet} setImageSet={setImageSet}/> */}
+        })}} imageSet={imageSet} setImageSet={setImageSet}/>
         <QuestionListForCreateComponent questions={vote.questions} setQuestions={setQuestions}/>
       </div>)
     },

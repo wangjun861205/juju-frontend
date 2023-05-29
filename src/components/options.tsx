@@ -114,7 +114,9 @@ export const MultiSelect = (props: { options: Item[], answer: number[], setAnswe
 	</div>
 }
 
-interface UpsertProps {
+
+
+interface UpdateProps {
 	option: Option
 	setOption: Dispatch<SetStateAction<Option>>,
 	isOpen: boolean,
@@ -122,46 +124,33 @@ interface UpsertProps {
 
 }
 
-export const Upsert = ({option, setOption, isOpen, setIsOpen}: UpsertProps) => {
-	const [opt, setOpt] = useState<Option>(option);
+export const Update = ({option, setOption, isOpen, setIsOpen}: UpdateProps) => {
 	const onImageChange: UploadProps['onChange'] = ({fileList}) => {
 		setOption((prev) => {
 			return {...prev, images: fileList.map(file => { return file.response.url })}
 		})
 	}
-	return <Modal open={isOpen}>
+	return <Modal open={isOpen} onOk={() => setIsOpen(false)}>
 		<Input placeholder="Option" onChange={(event) => {setOption(prev => {return {...prev, option: event.target.value }})}}/>
-		<Upload action="/upload/" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} />
+		<Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} />
 	</Modal>
 }
 
 interface CreateProps {
-	setOptions: Dispatch<SetStateAction<Option[]>>,
+	onOk: (option: Option) => void,
+	isOpen: boolean,
+	setIsOpen: Dispatch<SetStateAction<boolean>>,
 }
 
-export const Create = ({setOptions}: CreateProps) => {
-	const [option, setOption] = useState<Option>({id: 0, option: "", images: []});
-	const [isOpen, setIsOpen] = useState(false);
-	const setOpt = (opt: string) => {
-		setOption(prev => {
-			return {...prev, option: opt}
-		})
-	}
-	const setImages: Dispatch<SetStateAction<string[]>> = (action: SetStateAction<string[]>) => {
-		if (typeof action === "function") {
-			setOption(prev => {
-				return {...prev, images: action(prev.images)}});
-			return
-		}
-		setOption(prev => {
-			return {...prev, images: action}
-		});
-	}
+export const Create = ({onOk, isOpen, setIsOpen}: CreateProps) => {
+	const [opt, setOpt] = useState<Option>({id: 0, option: "", images: []});
+
+
 	return <div>
 		<Button onClick={() => {setIsOpen(true)}}><span>Add Option</span></Button>
-		<Modal open={isOpen} onOk={() => {setOptions(old => {return [...old, option]}); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
-			<Input placeholder="Option" onChange={(event) => { setOpt(event.target.value) }} ></Input>
-			<Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })}/>
+		<Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
+			<Input placeholder="Option" onChange={(event) => { setOpt(prev => {return {...prev, option: event.target.value }}) }} ></Input>
+			<Upload action="/upload/" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}/>
 		</Modal>
 		</div>
 }
