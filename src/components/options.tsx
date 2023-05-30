@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, SetStateAction, Dispatch } from "react";
 import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table, Image, Upload, UploadFile, UploadProps } from "antd";
+import { PlusOutlined, DeleteOutlined, EditOutlined, UploadOutlined } from "@ant-design/icons";
 import Item from "antd/lib/list/Item";
 import { delete_option, options_within_question, add_options } from "../apis/options";
 import { Option, Create as OptionCreate } from "../models/opt";
@@ -62,7 +63,48 @@ interface ListProps {
 
 
 export const List = ({ options, setOptions }: ListProps) => {
-	const nav = useNavigate();
+	const [editOpens, setEditOpens] = useState<boolean[]>(new Array(options.length).fill(false));
+
+	useEffect(() => {
+		setEditOpens(new Array(options.length).fill(false));
+	}, [options.length])
+
+	const setEditOpenFactory = (i: number) => {
+		return (action: SetStateAction<boolean>) => {
+			if (typeof action === 'function') {
+				setEditOpens(prev => {
+					const opens = [...prev];
+					opens[i] = action(opens[i]);
+					return opens;
+				})
+				return
+			}
+			setEditOpens(prev => {
+				const opens = [...prev];
+				opens[i] = action;
+				return opens;
+			})
+		}
+	}
+
+	const setOptionFactory = (i: number) => {
+		return (action: SetStateAction<Option>) => {
+				if (typeof action === 'function') {
+					setOptions(prev => {
+						const opts = [...prev];
+						opts[i] = action(opts[i]);
+						return opts;
+					})
+					return
+				}
+				setOptions(prev => {
+					const opts = [...prev];
+					opts[i] = action;
+					return opts;
+				})
+		}
+	}
+
 	const remove = (id: number) => {
 		const idx = options.findIndex(o => o.id === id);
 		setOptions(prev => {
@@ -71,7 +113,15 @@ export const List = ({ options, setOptions }: ListProps) => {
 		});
 	}
 
-	return <Table columns={[
+
+	return <>
+	{
+		options.map((o, i) => {
+			return <Update key={o.id} option={o} setOption={setOptionFactory(i)}  isOpen={editOpens[i]} setIsOpen={setEditOpenFactory(i)} />
+		
+		})
+	}
+	<Table columns={[
 			{
 				key: 'id',
 				title: 'ID',
@@ -87,17 +137,21 @@ export const List = ({ options, setOptions }: ListProps) => {
 				title: 'Images',
 				dataIndex: 'images',
 				render: (_, record) => {
-					return <Row>{ record.images.map(img => { return <Image src={`image/jpeg; base64, ${img}`} /> }) }</Row>
+					return <Row>{ record.images.map(img => { return <Image src={img} /> }) }</Row>
 				}
 			},
 			{
 				key: 'action',
 				title: 'Action',
-				render: (_, record) => {
-					return <Button onClick={() => remove(record.id) }>Delete</Button>;
+				render: (_, record, i) => {
+					return <>
+						<Button onClick={() => setEditOpenFactory(i)(true) }>Edit</Button>
+						<Button onClick={() => remove(record.id) } danger={true}>Delete</Button>
+					</>
 				}
 			}
 		]} dataSource={options}/>
+	</>
 }
 
 
@@ -125,16 +179,24 @@ interface UpdateProps {
 }
 
 export const Update = ({option, setOption, isOpen, setIsOpen}: UpdateProps) => {
+	const [opt, setOpt] = useState<Option>(option);
 	const onImageChange: UploadProps['onChange'] = ({fileList}) => {
-		setOption((prev) => {
+		setOpt((prev) => {
 			return {...prev, images: fileList.map(file => { return file.response.url })}
 		})
 	}
-	return <Modal open={isOpen} onOk={() => setIsOpen(false)}>
-		<Input placeholder="Option" onChange={(event) => {setOption(prev => {return {...prev, option: event.target.value }})}}/>
+	return <Modal open={isOpen} onOk={() => {setOption(opt);setIsOpen(false)}}>
+		<Input value={opt.option} placeholder="Option" onChange={(event) => {setOpt(prev => {return {...prev, option: event.target.value }})}}/>
 		<Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} />
 	</Modal>
 }
+
+const uploadButton = (
+    <div>
+      <PlusOutlined />
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  );
 
 interface CreateProps {
 	onOk: (option: Option) => void,
@@ -150,7 +212,9 @@ export const Create = ({onOk, isOpen, setIsOpen}: CreateProps) => {
 		<Button onClick={() => {setIsOpen(true)}}><span>Add Option</span></Button>
 		<Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
 			<Input placeholder="Option" onChange={(event) => { setOpt(prev => {return {...prev, option: event.target.value }}) }} ></Input>
-			<Upload action="/upload/" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}/>
+			<Upload method="PUT" action="/upload/test.png" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}>
+				{uploadButton}
+			</Upload>
 		</Modal>
 		</div>
 }

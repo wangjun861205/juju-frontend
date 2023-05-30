@@ -383,23 +383,20 @@ interface CreateProps {
 export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
   const [question, setQuestion] = useState<Question>({ id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0 })
   const [optionOpens, setOptionOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
+  const [createOptionOpen, setCreateOptionOpen] = useState(false);
 
-  const columns = [
-    {
-      title: "Option",
-      key: "option",
-      dataIndex: "option"
-    },
-    {
-      title: "Action",
-      render: (i: number) => {
-        return <Row>
-          <Button onClick={() => { setQuestion(prev => { const options = [...prev.options]; options.splice(i); return { ...prev, options: options } }) }}>Delete</Button>
-          <Button>Edit</Button>
-        </Row>
-      }
+  const setOptions = (action: SetStateAction<Option[]>) => {
+    if (typeof action === "function") {
+      setQuestion((prev) => {
+        return { ...prev, options: action(prev.options) }
+      })
+      return
     }
-  ]
+    setQuestion((prev) => {
+      return { ...prev, options: action }
+    })
+  }
+
 
 
   const modalStyle = {
@@ -432,7 +429,7 @@ export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
       <Radio value='MULTI'>Multiple</Radio>
     </Radio.Group>
     <Row style={buttonRowStyle}>
-      <Button type="primary" onClick={() => { }}>Add a Option</Button>
+      <Button type="primary" onClick={() => { setCreateOptionOpen(true) }}>Add a Option</Button>
     </Row>
     {question.options.map((o, i) => {
       return <OptionUpdate
@@ -467,6 +464,7 @@ export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
         }} />
     })
     }
-    <Table dataSource={question.options} columns={columns} />
+    <OptionCreate isOpen={createOptionOpen} setIsOpen={setCreateOptionOpen} onOk={(option) => {setQuestion(prev => {return {...prev, options: [...prev.options, option]}})}}/>
+    <OptionList options={question.options} setOptions={setOptions}/>
   </Modal>
 }

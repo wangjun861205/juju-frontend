@@ -4,6 +4,6 @@ export type Create = {
 
 export type Option = {
   id: number,
-  option: String,
+  option: string,
   images: string[],
 }
