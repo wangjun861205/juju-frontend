@@ -7,7 +7,7 @@ import { QuestionType } from "../models/question";
 import { Option } from "../models/opt";
 import { Create as AnswerCreate } from "../models/answer";
 import { Question } from "../models/question";
-import { question as fetch_question} from "../apis/question";
+import { question as fetch_question } from "../apis/question";
 import { options_within_question } from "../apis/options";
 import { answers_of_question, submit_answer } from "../apis/answer";
 import { Create as QuestionCreateModel } from "../models/question";
@@ -167,10 +167,10 @@ export const Filling = ({ question_id }: FillingProps) => {
       if (!q) throw new Error("question still be uninitiated");
       if (q.answer.length === 0) {
         q.answer.push(e.target.value);
-        return {...q};
+        return { ...q };
       }
       q.answer[0] = e.target.value;
-      return {...q};
+      return { ...q };
     })
   }
 
@@ -180,10 +180,10 @@ export const Filling = ({ question_id }: FillingProps) => {
       const answer = [...q.answer];
       if (e.target.checked) {
         answer.push(e.target.value);
-        return {...q, answer};
+        return { ...q, answer };
       }
       answer.splice(q.answer.indexOf(e.target.value), 1);
-      return {...q, answer};
+      return { ...q, answer };
     });
   }
   return <>{question ?
@@ -194,23 +194,24 @@ export const Filling = ({ question_id }: FillingProps) => {
       <Row>Version: {question.version}</Row>
       <Row>Options:</Row>
       {question.type_ === QuestionType.SINGLE
-        ? <Radio.Group value={question.answer?.[0]}> 
-            {question?.options.map(o => { 
-              return <Row><Radio value={o.id} onChange={radioOnChange}>{o.option}</Radio></Row> })
-            }
-          </Radio.Group>
-        : <Checkbox.Group value={question.answer}> 
-            {question?.options.map(o => { 
-              return <Checkbox value={o.id} onChange={checkboxOnChange}>{o.option}</Checkbox> 
-            })}
-          </Checkbox.Group>}
-      <Button onClick={() => submit_answer(question_id, question.answer).then(_=>message.success('submit answer successfully')).catch(e => message.error(e))}>提交</Button>
+        ? <Radio.Group value={question.answer?.[0]}>
+          {question?.options.map(o => {
+            return <Row><Radio value={o.id} onChange={radioOnChange}>{o.option}</Radio></Row>
+          })
+          }
+        </Radio.Group>
+        : <Checkbox.Group value={question.answer}>
+          {question?.options.map(o => {
+            return <Checkbox value={o.id} onChange={checkboxOnChange}>{o.option}</Checkbox>
+          })}
+        </Checkbox.Group>}
+      <Button onClick={() => submit_answer(question_id, question.answer).then(_ => message.success('submit answer successfully')).catch(e => message.error(e))}>提交</Button>
     </div>
     : <></>}</>
 }
 
 
-interface UpsertProps  {
+interface UpsertProps {
   question: Question,
   setQuestion: Dispatch<SetStateAction<Question>>,
   isOpen: boolean,
@@ -218,7 +219,7 @@ interface UpsertProps  {
 }
 
 
-export const Update = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) => {
+export const Update = ({ question, setQuestion, isOpen, setIsOpen }: UpsertProps) => {
   const [opens, setOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
 
   const columns = [
@@ -231,7 +232,7 @@ export const Update = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) 
       title: "Action",
       render: (i: number) => {
         return <Row>
-          <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
+          <Button onClick={() => { setQuestion(prev => { const options = [...prev.options]; options.splice(i); return { ...prev, options: options } }) }}>Delete</Button>
           <Button>Edit</Button>
         </Row>
       }
@@ -262,46 +263,47 @@ export const Update = ({question, setQuestion, isOpen, setIsOpen}: UpsertProps) 
     justifyContent: "end",
   }
 
-  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
-    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
-    <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
+  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => { setIsOpen(false) }} destroyOnClose={true}>
+    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev => { return { ...prev, description: e.target.value } }) }} />
+    <Radio.Group value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => { return { ...prev, type_: e.target.value } })}>
       <Radio value='SINGLE'>Single</Radio>
       <Radio value='MULTI'>Multiple</Radio>
     </Radio.Group>
     <Row style={buttonRowStyle}>
-      <Button type="primary" onClick={() => {}}>Add a Option</Button>
+      <Button type="primary" onClick={() => { }}>Add a Option</Button>
     </Row>
-    { question.options.map((o, i) => { 
-      return <OptionUpdate 
-              option={o} 
-              key={i} 
-              setOption={
-                (action: SetStateAction<Option>) => { 
-                  setQuestion((prev) => {
-                    if (typeof action === "function") {
-                      const options = [...prev.options];
-                      options[i] = action(options[i]);
-                      return {...prev, options};
-                    }
-                    return {...prev, options: {...prev.options, [i]: action}}
-                  })
-                }}
-                isOpen={opens[i]}
-                setIsOpen={(action: SetStateAction<boolean>) => {
-                  if (typeof action === 'function') {
-                    setOpens(prev => {
-                      const next_opens = [...opens];
-                      next_opens[i] = action(next_opens[i]);
-                      return next_opens;
-                    })
-                    return 
-                  }
-                  setOpens(prev => {
-                    const next_opens = [...opens];
-                    next_opens[i] = action;
-                    return next_opens;
-                  })
-                }}/> })
+    {question.options.map((o, i) => {
+      return <OptionUpdate
+        option={o}
+        key={i}
+        setOption={
+          (action: SetStateAction<Option>) => {
+            setQuestion((prev) => {
+              if (typeof action === "function") {
+                const options = [...prev.options];
+                options[i] = action(options[i]);
+                return { ...prev, options };
+              }
+              return { ...prev, options: { ...prev.options, [i]: action } }
+            })
+          }}
+        isOpen={opens[i]}
+        setIsOpen={(action: SetStateAction<boolean>) => {
+          if (typeof action === 'function') {
+            setOpens(prev => {
+              const next_opens = [...opens];
+              next_opens[i] = action(next_opens[i]);
+              return next_opens;
+            })
+            return
+          }
+          setOpens(prev => {
+            const next_opens = [...opens];
+            next_opens[i] = action;
+            return next_opens;
+          })
+        }} />
+    })
     }
     <Table dataSource={question.options} columns={columns} />
   </Modal>
@@ -312,7 +314,7 @@ interface ListForCreateProps {
   setQuestions: (questions: QuestionCreateModel[]) => void,
 }
 
-export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => {
+export const ListForCreate = ({ questions, setQuestions }: ListForCreateProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [idx, setIdx] = useState<number>();
   const [editing, setEditing] = useState<QuestionCreateModel>();
@@ -325,7 +327,7 @@ export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => 
 
   const set = useCallback((question: QuestionCreateModel) => {
     if (idx !== undefined) {
-      questions[idx] = question; 
+      questions[idx] = question;
       setQuestions(questions);
       setIdx(undefined);
     }
@@ -346,8 +348,8 @@ export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => 
       title: "Action",
       render: (_, item, i) => {
         return <Row>
-          <Button onClick={() => {setIdx(i); setIsOpen(true)}}>Edit</Button>
-          <Button danger={true} onClick={() => {questions.splice(i); setQuestions(questions)}}>Delete</Button>
+          <Button onClick={() => { setIdx(i); setIsOpen(true) }}>Edit</Button>
+          <Button danger={true} onClick={() => { questions.splice(i); setQuestions(questions) }}>Delete</Button>
         </Row>
       }
     }
@@ -367,19 +369,19 @@ export const ListForCreate = ({questions, setQuestions}: ListForCreateProps) => 
   }
 
   return <div>
-    <Table expandable={expandableConfig} dataSource={questions.map((q, i) => ({...q, key: i.toString()}))} columns={columns} pagination={false}/>
+    <Table expandable={expandableConfig} dataSource={questions.map((q, i) => ({ ...q, key: i.toString() }))} columns={columns} pagination={false} />
   </div>
-  
+
 }
 
-interface CreateProps  {
+interface CreateProps {
   isOpen: boolean,
   setIsOpen: Dispatch<SetStateAction<boolean>>,
   onOk: (question: Question) => void,
 }
 
-export const Create = ({isOpen, setIsOpen, onOk}: CreateProps) => {
-  const [question, setQuestion] = useState<Question>({id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0})
+export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
+  const [question, setQuestion] = useState<Question>({ id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0 })
   const [optionOpens, setOptionOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
 
   const columns = [
@@ -392,7 +394,7 @@ export const Create = ({isOpen, setIsOpen, onOk}: CreateProps) => {
       title: "Action",
       render: (i: number) => {
         return <Row>
-          <Button onClick={() => {setQuestion(prev => {const options = [...prev.options]; options.splice(i); return {...prev, options: options}})}}>Delete</Button>
+          <Button onClick={() => { setQuestion(prev => { const options = [...prev.options]; options.splice(i); return { ...prev, options: options } }) }}>Delete</Button>
           <Button>Edit</Button>
         </Row>
       }
@@ -423,46 +425,47 @@ export const Create = ({isOpen, setIsOpen, onOk}: CreateProps) => {
     justifyContent: "end",
   }
 
-  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => {setIsOpen(false)}} destroyOnClose={true}>
-    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev =>  {return { ...prev, description: e.target.value }} ) }}/>
-    <Radio.Group  value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => {return {...prev, type_: e.target.value}})}>
+  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => { setIsOpen(false) }} destroyOnClose={true}>
+    <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev => { return { ...prev, description: e.target.value } }) }} />
+    <Radio.Group value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => { return { ...prev, type_: e.target.value } })}>
       <Radio value='SINGLE'>Single</Radio>
       <Radio value='MULTI'>Multiple</Radio>
     </Radio.Group>
     <Row style={buttonRowStyle}>
-      <Button type="primary" onClick={() => {}}>Add a Option</Button>
+      <Button type="primary" onClick={() => { }}>Add a Option</Button>
     </Row>
-    { question.options.map((o, i) => { 
-      return <OptionUpdate 
-              option={o} 
-              key={i} 
-              setOption={
-                (action: SetStateAction<Option>) => { 
-                  setQuestion((prev) => {
-                    if (typeof action === "function") {
-                      const options = [...prev.options];
-                      options[i] = action(options[i]);
-                      return {...prev, options};
-                    }
-                    return {...prev, options: {...prev.options, [i]: action}}
-                  })
-                }}
-                isOpen={opens[i]}
-                setIsOpen={(action: SetStateAction<boolean>) => {
-                  if (typeof action === 'function') {
-                    setOpens(prev => {
-                      const next_opens = [...opens];
-                      next_opens[i] = action(next_opens[i]);
-                      return next_opens;
-                    })
-                    return 
-                  }
-                  setOpens(prev => {
-                    const next_opens = [...opens];
-                    next_opens[i] = action;
-                    return next_opens;
-                  })
-                }}/> })
+    {question.options.map((o, i) => {
+      return <OptionUpdate
+        option={o}
+        key={i}
+        setOption={
+          (action: SetStateAction<Option>) => {
+            setQuestion((prev) => {
+              if (typeof action === "function") {
+                const options = [...prev.options];
+                options[i] = action(options[i]);
+                return { ...prev, options };
+              }
+              return { ...prev, options: { ...prev.options, [i]: action } }
+            })
+          }}
+        isOpen={optionOpens[i]}
+        setIsOpen={(action: SetStateAction<boolean>) => {
+          if (typeof action === 'function') {
+            setOptionOpens(prev => {
+              const next_opens = [...optionOpens];
+              next_opens[i] = action(next_opens[i]);
+              return next_opens;
+            })
+            return
+          }
+          setOptionOpens(prev => {
+            const next_opens = [...optionOpens];
+            next_opens[i] = action;
+            return next_opens;
+          })
+        }} />
+    })
     }
     <Table dataSource={question.options} columns={columns} />
   </Modal>

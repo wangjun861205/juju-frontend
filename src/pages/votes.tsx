@@ -11,14 +11,14 @@ import {
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { get, post, fetch_list } from "../utils/api";
-import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent, Create as QuestionCreate} from "../components/questions";
+import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent, Create as QuestionCreate } from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
 import { Layout } from "../layout/layout";
-import {Create as CreateVoteComponent} from "../components/vote";
+import { Create as CreateVoteComponent } from "../components/vote";
 import { Create as VoteCreateModel } from "../models/vote";
-import { QuestionType, Create as QuestionCreateModel } from "../models/question";
+import { QuestionType, Create as QuestionCreateModel, Question } from "../models/question";
 import "./vote.css";
 import { GridList } from "@material-ui/core";
 
@@ -42,12 +42,12 @@ export const CreateVote = () => {
   const { organization_id } = useParams();
   const nav = useNavigate();
   const [current, setCurrent] = useState(0);
-  const [vote, setVote] = useState<VoteCreateModel>({name: "", deadline: null, visibility: 'Organization', questions: [], organization_id: parseInt(organization_id!)});
+  const [vote, setVote] = useState<VoteCreateModel>({ name: "", deadline: null, visibility: 'Organization', questions: [], organization_id: parseInt(organization_id!) });
   const [isQuestionOpen, setIsQuestionOpen] = useState(false);
   const [imageSet, setImageSet] = useState<string[][]>([]);
 
   const create = () => {
-    fetch(`/organizations/${organization_id}/votes`, {method: "POST", headers:{"Content-Type": "application/json"}, body: JSON.stringify(vote)}).then(res => {
+    fetch(`/organizations/${organization_id}/votes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(vote) }).then(res => {
       if (res.status !== 200) {
         res.text().then(e => message.error(e)).catch(e => message.error(e));
         return;
@@ -56,7 +56,7 @@ export const CreateVote = () => {
     })
   }
 
-  const setQuestions =(questions: QuestionCreateModel[]) => {
+  const setQuestions = (questions: QuestionCreateModel[]) => {
     setVote(prev => ({ ...prev, questions: questions }))
   }
 
@@ -68,18 +68,20 @@ export const CreateVote = () => {
   const steps = [
     {
       title: "Create a Vote",
-      content: (<CreateVoteComponent data={vote} setData={setVote}/>)
+      content: (<CreateVoteComponent data={vote} setData={setVote} />)
     },
     {
       title: "Add Some Questions",
       content: (<div>
         <Button style={addQuestionButtonStyle} type='primary' onClick={() => setIsQuestionOpen(true)}>Add a Question</Button>
-        <QuestionCreate isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} push={(q: any) => {setVote(prev => {
-          const questions = [...prev.questions];
-          questions.push(q);
-          return {...prev, questions: questions}
-        })}} imageSet={imageSet} setImageSet={setImageSet}/>
-        <QuestionListForCreateComponent questions={vote.questions} setQuestions={setQuestions}/>
+        <QuestionCreate isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} onOk={(q: Question) => {
+          setVote(prev => {
+            const questions = [...prev.questions];
+            questions.push(q);
+            return { ...prev, questions: questions }
+          })
+        }} />
+        <QuestionListForCreateComponent questions={vote.questions} setQuestions={setQuestions} />
       </div>)
     },
     {
@@ -94,33 +96,33 @@ export const CreateVote = () => {
         </Card>
         <Divider orientation="left">Questions</Divider>
         <Row gutter={16}>
-          { vote.questions.map(q => (
-          <Col span={8}>
-            <Card>
-              <Descriptions style={{display: "flex"}} >
-                <Descriptions.Item style={{display: "flex"}}label="Description">{q.description}</Descriptions.Item>
-                <Descriptions.Item style={{display: "flex"}}label="Type">{q.type_}</Descriptions.Item>
-              </Descriptions>
-              <List bordered={true}>
-                { q.options.map(o => (<List.Item>{o.option}</List.Item>)) }
-              </List>
-            </Card>
-          </Col>)) }
+          {vote.questions.map(q => (
+            <Col span={8}>
+              <Card>
+                <Descriptions style={{ display: "flex" }} >
+                  <Descriptions.Item style={{ display: "flex" }} label="Description">{q.description}</Descriptions.Item>
+                  <Descriptions.Item style={{ display: "flex" }} label="Type">{q.type_}</Descriptions.Item>
+                </Descriptions>
+                <List bordered={true}>
+                  {q.options.map(o => (<List.Item>{o.option}</List.Item>))}
+                </List>
+              </Card>
+            </Col>))}
         </Row>
       </div>)
     }
   ]
 
-  const items = steps.map(v => ({title: v.title, key: v.title}))
+  const items = steps.map(v => ({ title: v.title, key: v.title }))
 
 
   return <Layout>
     <Steps className="Steps" current={current} items={items} />
     {steps[current].content}
-    <Row className="ButtonRow" style={{justifyContent: "space-between"}}>
-      { current > 0 && <Button onClick={() => setCurrent(prev => prev - 1)}>Previous</Button> }
-      { current < items.length - 1 && <Button onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
-      { current === steps.length - 1 && <Button type='primary' onClick={create}>Publish</Button>}
+    <Row className="ButtonRow" style={{ justifyContent: "space-between" }}>
+      {current > 0 && <Button onClick={() => setCurrent(prev => prev - 1)}>Previous</Button>}
+      {current < items.length - 1 && <Button onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
+      {current === steps.length - 1 && <Button type='primary' onClick={create}>Publish</Button>}
     </Row>
   </Layout>
 }
@@ -239,7 +241,7 @@ export const Filling = () => {
   const nav = useNavigate();
   const [questionIDs, setQuestionIDs] = useState<number[]>([]);
   const [answers, setAnswers] = useState<number[][]>([]);
-  const [currIdx, setCurrIdx] = useState<number|null>(null);
+  const [currIdx, setCurrIdx] = useState<number | null>(null);
 
   const setValue = useCallback((vals: number[]) => {
     setAnswers(old => {
@@ -283,7 +285,7 @@ export const Filling = () => {
 
   return <>{questionIDs.length > 0 && currIdx !== null && answers && vote_id
     ? <div>
-      <FillingComponent id={parseInt(vote_id)}/>
+      <FillingComponent id={parseInt(vote_id)} />
     </div>
     : <div></div>}</>
 }
