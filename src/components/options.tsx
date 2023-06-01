@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, SetStateAction, Dispatch } from "react";
-import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table, Image, Upload, UploadFile, UploadProps } from "antd";
+import { Row, List as AList, Button, Modal, Input, Radio, Checkbox, message, Table, Image, UploadFile, UploadProps } from "antd";
 import { PlusOutlined, DeleteOutlined, EditOutlined, UploadOutlined } from "@ant-design/icons";
 import Item from "antd/lib/list/Item";
 import { delete_option, options_within_question, add_options } from "../apis/options";
 import { Option, Create as OptionCreate } from "../models/opt";
 import { useNavigate } from "react-router";
+import { Upload } from "./upload"
 
 interface AddModalProps  {
 	visible: boolean,
@@ -187,13 +188,13 @@ export const Update = ({option, setOption, isOpen, setIsOpen}: UpdateProps) => {
 	}
 	return <Modal open={isOpen} onOk={() => {setOption(opt);setIsOpen(false)}}>
 		<Input value={opt.option} placeholder="Option" onChange={(event) => {setOpt(prev => {return {...prev, option: event.target.value }})}}/>
-		<Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} />
+		{/* <Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} /> */}
 	</Modal>
 }
 
 const uploadButton = (
     <div>
-      <PlusOutlined />
+      <PlusOutlined rev={false}/>
       <div style={{ marginTop: 8 }}>Upload</div>
     </div>
   );
@@ -206,15 +207,19 @@ interface CreateProps {
 
 export const Create = ({onOk, isOpen, setIsOpen}: CreateProps) => {
 	const [opt, setOpt] = useState<Option>({id: 0, option: "", images: []});
+	const [files, setFiles] = useState<UploadFile[]>([]);
+
+
 
 
 	return <div>
 		<Button onClick={() => {setIsOpen(true)}}><span>Add Option</span></Button>
 		<Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
 			<Input placeholder="Option" onChange={(event) => { setOpt(prev => {return {...prev, option: event.target.value }}) }} ></Input>
-			<Upload method="PUT" action="/upload/test.png" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}>
+			{/* <Upload method="PUT" action="/upload/test.png" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}>
 				{uploadButton}
-			</Upload>
+			</Upload> */}
+			<Upload files={files} setFiles={setFiles} />
 		</Modal>
 		</div>
 }
