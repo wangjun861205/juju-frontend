@@ -68,7 +68,7 @@ export const Layout = <P, >({children}: PropsWithChildren<P>) => {
                             </Menu>
                         </div>
                     </div>
-                    <div className='Content'>
+                    <div className='relative w-[70%] h-[100%]'>
                         { children }
                     </div>
                 </div>

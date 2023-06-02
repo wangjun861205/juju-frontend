@@ -231,10 +231,11 @@ export const Filling = ({ id }: { id: number }) => {
 interface VoteCreateProps {
 	data: VoteCreateModel,
 	setData: Dispatch<SetStateAction<VoteCreateModel>>,
+	className?: string,
 }
 
-export const Create = ({data, setData}: VoteCreateProps) => {
-	return <Form>
+export const Create = ({data, setData, className}: VoteCreateProps) => {
+	return <Form className={className ?? "m-10 text-center items-center"}>
 				<Form.Item label="Name"><Input value={data.name} onChange={(e) => setData(prev => { return {...data, name: e.target.value}})}/></Form.Item>
 				<Form.Item label="Deadline"><DatePicker value={data.deadline ? dayjs(data.deadline) : dayjs()} onChange={(v) => setData(prev => { return { ...data, deadline: v ? v.format("YYYY-MM-DD") : null}})}/></Form.Item>
 				<Form.Item label="Visibility">

@@ -19,7 +19,6 @@ import { Layout } from "../layout/layout";
 import { Create as CreateVoteComponent } from "../components/vote";
 import { Create as VoteCreateModel } from "../models/vote";
 import { QuestionType, Create as QuestionCreateModel, Question } from "../models/question";
-import "./vote.css";
 import { GridList } from "@material-ui/core";
 
 
@@ -68,12 +67,12 @@ export const CreateVote = () => {
   const steps = [
     {
       title: "Create a Vote",
-      content: (<CreateVoteComponent data={vote} setData={setVote} />)
+      content: (<CreateVoteComponent className="m-[20%] h-[40%] flex flex-wrap flex-col justify-evenly" data={vote} setData={setVote} />)
     },
     {
       title: "Add Some Questions",
-      content: (<div>
-        <Button style={addQuestionButtonStyle} type='primary' onClick={() => setIsQuestionOpen(true)}>Add a Question</Button>
+      content: (<div className="relative mt-[15%]">
+        <Button className="mb-10 ml-5" type='primary' onClick={() => setIsQuestionOpen(true)}>Add a Question</Button>
         <QuestionCreate isOpen={isQuestionOpen} setIsOpen={setIsQuestionOpen} onOk={(q: Question) => {
           setVote(prev => {
             const questions = [...prev.questions];
@@ -117,13 +116,11 @@ export const CreateVote = () => {
 
 
   return <Layout>
-    <Steps className="Steps" current={current} items={items} />
-    {steps[current].content}
-    <Row className="ButtonRow" style={{ justifyContent: "space-between" }}>
-      {current > 0 && <Button onClick={() => setCurrent(prev => prev - 1)}>Previous</Button>}
-      {current < items.length - 1 && <Button onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
+      <Steps className="w-full m-15" current={current} items={items} />
+      {steps[current].content}
+      {current > 0 && <Button className="absolute left-[10%] bottom-[10%]" onClick={() => setCurrent(prev => prev - 1)}>Previous</Button>}
+      {current < items.length - 1 && <Button className="absolute right-[10%] bottom-[10%]" onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
       {current === steps.length - 1 && <Button type='primary' onClick={create}>Publish</Button>}
-    </Row>
   </Layout>
 }
 

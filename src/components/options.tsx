@@ -6,6 +6,7 @@ import { delete_option, options_within_question, add_options } from "../apis/opt
 import { Option, Create as OptionCreate } from "../models/opt";
 import { useNavigate } from "react-router";
 import { Upload } from "./upload"
+import { v4 as uuidv4} from "uuid";
 
 interface AddModalProps  {
 	visible: boolean,
@@ -136,9 +137,10 @@ export const List = ({ options, setOptions }: ListProps) => {
 			{
 				key: 'images',
 				title: 'Images',
-				dataIndex: 'images',
 				render: (_, record) => {
-					return <Row>{ record.images.map(img => { return <Image src={img} /> }) }</Row>
+					return <Row>{ record.images.map(img => { 
+						return <Image src={img} /> 
+					}) }</Row>
 				}
 			},
 			{
@@ -181,23 +183,20 @@ interface UpdateProps {
 
 export const Update = ({option, setOption, isOpen, setIsOpen}: UpdateProps) => {
 	const [opt, setOpt] = useState<Option>(option);
-	const onImageChange: UploadProps['onChange'] = ({fileList}) => {
-		setOpt((prev) => {
-			return {...prev, images: fileList.map(file => { return file.response.url })}
+	const [files, setFiles] = useState<UploadFile[]>(opt.images.map(url => { return {uid: uuidv4(), name: "", status: "done", url: url}}));
+
+	useEffect(() => {
+		setOpt(prev => {
+			return {...prev, images: files.filter(file => {return file.url}).map(file => { return file.url! })}
 		})
-	}
+	}, [files])
+
 	return <Modal open={isOpen} onOk={() => {setOption(opt);setIsOpen(false)}}>
 		<Input value={opt.option} placeholder="Option" onChange={(event) => {setOpt(prev => {return {...prev, option: event.target.value }})}}/>
-		{/* <Upload action="/upload/" listType="picture-card" fileList={option?.images.map(img => { return {uid: "1", name: "", url: img} })} onChange={onImageChange} /> */}
+		<Upload files={files} setFiles={setFiles} />
 	</Modal>
 }
 
-const uploadButton = (
-    <div>
-      <PlusOutlined rev={false}/>
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </div>
-  );
 
 interface CreateProps {
 	onOk: (option: Option) => void,
@@ -208,17 +207,16 @@ interface CreateProps {
 export const Create = ({onOk, isOpen, setIsOpen}: CreateProps) => {
 	const [opt, setOpt] = useState<Option>({id: 0, option: "", images: []});
 	const [files, setFiles] = useState<UploadFile[]>([]);
-
-
-
+	useEffect(() => {
+		setOpt(prev => {
+			return {...prev, images: files.filter(file => {return file.url}).map(file => { return file.url! })}
+		})
+	}, [files])
 
 	return <div>
 		<Button onClick={() => {setIsOpen(true)}}><span>Add Option</span></Button>
 		<Modal open={isOpen} onOk={() => {onOk(opt); setIsOpen(false)}} destroyOnClose={true} onCancel={() => {setIsOpen(false)}}>
 			<Input placeholder="Option" onChange={(event) => { setOpt(prev => {return {...prev, option: event.target.value }}) }} ></Input>
-			{/* <Upload method="PUT" action="/upload/test.png" listType="picture-card" fileList={opt?.images.map(img => { return {uid: "1", name: "", url: img} })}>
-				{uploadButton}
-			</Upload> */}
 			<Upload files={files} setFiles={setFiles} />
 		</Modal>
 		</div>

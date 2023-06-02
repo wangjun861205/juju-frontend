@@ -464,7 +464,10 @@ export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
         }} />
     })
     }
-    <OptionCreate isOpen={createOptionOpen} setIsOpen={setCreateOptionOpen} onOk={(option) => {setQuestion(prev => {return {...prev, options: [...prev.options, option]}})}}/>
+    <OptionCreate isOpen={createOptionOpen} setIsOpen={setCreateOptionOpen} onOk={(option) => {
+      setQuestion(prev => {
+      return {...prev, options: [...prev.options, option]}
+      })}}/>
     <OptionList options={question.options} setOptions={setOptions}/>
   </Modal>
 }
