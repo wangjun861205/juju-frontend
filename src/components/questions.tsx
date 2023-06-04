@@ -1,12 +1,12 @@
 import React, { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
 import { get, put, ListResponse, delete_, DeleteResponse } from "../utils/api";
-import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table, Modal, TableColumnProps } from "antd";
+import { Button, Checkbox, Input, message, Radio, RadioChangeEvent, Row, Select, Table, Modal, TableColumnProps, TableProps, Descriptions, Spin, Image } from "antd";
 import { useNavigate } from "react-router";
 import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { QuestionType } from "../models/question";
 import { Option } from "../models/opt";
 import { Create as AnswerCreate } from "../models/answer";
-import { Question } from "../models/question";
+import { Question, Detail as QuestionDetail } from "../models/question";
 import { question as fetch_question } from "../apis/question";
 import { options_within_question } from "../apis/options";
 import { answers_of_question, submit_answer } from "../apis/answer";
@@ -25,26 +25,15 @@ type Item = {
   has_answered: boolean,
 }
 
-export const List = ({ vote_id }: { vote_id: string }) => {
-  const [state, setState] = useState<ListResponse<Item>>({ list: [], total: 0 });
+interface ListProps {
+  questions: QuestionDetail[],
+  setQuestions: Dispatch<SetStateAction<QuestionDetail[]>>,
+}
+
+export const List = ({ questions, setQuestions }: ListProps) => {
   const nav = useNavigate();
-  useEffect(() => {
-    get<ListResponse<Item>>(`/votes/${vote_id}/questions`).then((res) => {
-      setState(res);
-    }).catch(reason => { console.log(reason) });
-  }, [vote_id]);
-
-  const _delete = (item: Item, i: number) => {
-    delete_<DeleteResponse>(`/questions/${item.id}`).then(res => {
-      const newList = [...state.list];
-      newList.splice(i, 1);
-      setState({ list: newList, total: state.total - 1 })
-
-    }).catch(reason => {
-      console.log(reason);
-    });
-  }
-
+  const [options, setOptions] = useState<Map<number, Option[]>>(new Map());
+  const [loadings, setLoadings] = useState<Map<number, boolean>>(new Map());
 
   const columns = [
     {
@@ -74,25 +63,63 @@ export const List = ({ vote_id }: { vote_id: string }) => {
       render: (_: any, record: Item, i: number) => {
         return <div>
           <Button onClick={(event) => { event.stopPropagation(); nav(`/questions/${record.id}/update`); }}>Update</Button>
-          <Button onClick={(event) => { event.stopPropagation(); _delete(record, i) }}>Delete</Button>
+          <Button onClick={(event) => { event.stopPropagation(); }}>Delete</Button>
         </div>
       }
     }
   ]
 
-  return <Table columns={columns} dataSource={state.list} onRow={(item: Item) => {
+  const expandableConfig: ExpandableConfig<QuestionDetail> = {
+    onExpand: (_, record) => {
+      setLoadings(prev => {
+        return new Map(prev.set(record.id, true))
+      })
+      if (options.get(record.id) === undefined) {
+        fetch(`/questions/${record.id}/options`)
+        .then(resp => {
+          if (resp.status !== 200) {
+            message.error('Failed to fetch options');
+            return;
+          }
+          resp.json().then(opts => {
+            setOptions(prev => {
+              return new Map(prev.set(record.id, opts))
+            })
+          })
+        })
+        .catch(err => message.error(err))
+        .finally(() => {
+          setLoadings(prev => {
+            return new Map(prev.set(record.id, false))
+          })
+        })
+      }
+      
+    },
+    expandedRowRender: (record) => {
+      return <Spin spinning={loadings.get(record.id) ?? false}>
+      {
+        options.get(record.id)?.map(o => {
+          return <Descriptions key={o.id} title="Options" column={3}>
+            <Descriptions.Item label="ID">{o.id}</Descriptions.Item>
+            <Descriptions.Item label="Option">{o.option}</Descriptions.Item>
+            <Descriptions.Item label="Images">{o.images?.map(img => { 
+              return <Image key={img} src={img} />
+            })}</Descriptions.Item>
+          </Descriptions>
+        })
+      }
+      </Spin>
+    }
+  }
+
+  return <Table columns={columns} dataSource={questions} onRow={(item: Item) => {
     return {
       onClick: () => {
         nav(`/questions/${item.id}`);
       }
     }
-  }} />
-}
-
-type QuestionDetail = {
-  id: number,
-  description: string,
-  type_: "Single" | "Multi",
+  }} expandable={expandableConfig}/>
 }
 
 export const Detail = ({ question_id }: { question_id: number }) => {
@@ -422,7 +449,7 @@ export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
     justifyContent: "end",
   }
 
-  return <Modal width="600px" open={isOpen} closable={false} onCancel={() => { setIsOpen(false) }} destroyOnClose={true}>
+  return <Modal width="600px" open={isOpen} closable={true} onOk={() => {onOk(question); setIsOpen(false)}} onCancel={() => { setIsOpen(false) }} destroyOnClose={true}>
     <Input.TextArea style={descriptionStyle} value={question.description} rows={5} title="Description" onChange={(e) => { setQuestion(prev => { return { ...prev, description: e.target.value } }) }} />
     <Radio.Group value={question.type_} style={typeStyle} onChange={(e) => setQuestion(prev => { return { ...prev, type_: e.target.value } })}>
       <Radio value='SINGLE'>Single</Radio>

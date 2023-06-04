@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, Dispatch, SetStateAction } from "react";
-import { Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent, Form, Steps } from "antd";
+import { Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent, Form, Steps, Descriptions } from "antd";
 import { get, ListResponse, delete_, DeleteResponse, Pagination, put, UpdateResponse } from "../utils/api";
 import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
@@ -19,6 +19,7 @@ type Vote = {
 	name: string,
 	deadline: string | null,
 	status: Status,
+
 }
 
 export const Detail = ({ id }: { id: string }) => {
@@ -32,6 +33,13 @@ export const Detail = ({ id }: { id: string }) => {
 			console.log(reason);
 		})
 	}, [id]);
+
+	return <Descriptions title="Vote Detail" bordered column={2}>
+		<Descriptions.Item label="ID">{data.id}</Descriptions.Item>
+		<Descriptions.Item label="Name">{data.name}</Descriptions.Item>
+		<Descriptions.Item label="Deadline">{data.deadline}</Descriptions.Item>
+		<Descriptions.Item label="Status">{data.status}</Descriptions.Item>
+	</Descriptions>
 
 	return <div>
 		<Input disabled={true} value={data.id} />

@@ -65,5 +65,26 @@ export const Detail = () => {
 
 export const List = () => {
   const { vote_id } = useParams();
-  return <CQuestionList vote_id={vote_id!} />
+  const nav = useNavigate();
+  const [questions, setQuestions] = useState<QuestionDetail[]>([]);
+  useEffect(() => {
+    fetch(`/votes/${vote_id}/questions`).then(res => {
+      if (res.status !== 200) {
+        res.text().then(err => {
+          message.error(err);
+          nav(-1);
+        }).catch(err => {
+          message.error(err);
+          nav(-1);
+        })
+      }
+      res.json().then(qs => {
+        setQuestions(qs);
+      }).catch(err => {
+        message.error(err);
+      })
+    })
+  }, [])
+
+  return <CQuestionList questions={questions} setQuestions={setQuestions} />
 }

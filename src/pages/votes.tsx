@@ -1,5 +1,5 @@
 import Calendar from "../components/calendar"
-import { Input, Button, Alert, Table, Pagination, Select, message, Steps, Row, Descriptions, Card, Grid, Divider, Col, List } from "antd";
+import { Input, Button, Alert, Table, Pagination, Select, message, Steps, Row, Descriptions, Card, Grid, Divider, Col, List, Image } from "antd";
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Detail as VoteDetail } from "../models/vote";
@@ -18,7 +18,7 @@ import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingCompone
 import { Layout } from "../layout/layout";
 import { Create as CreateVoteComponent } from "../components/vote";
 import { Create as VoteCreateModel } from "../models/vote";
-import { QuestionType, Create as QuestionCreateModel, Question } from "../models/question";
+import { QuestionType, Create as QuestionCreateModel, Question, Detail as QuestionDetail } from "../models/question";
 import { GridList } from "@material-ui/core";
 
 
@@ -43,7 +43,6 @@ export const CreateVote = () => {
   const [current, setCurrent] = useState(0);
   const [vote, setVote] = useState<VoteCreateModel>({ name: "", deadline: null, visibility: 'Organization', questions: [], organization_id: parseInt(organization_id!) });
   const [isQuestionOpen, setIsQuestionOpen] = useState(false);
-  const [imageSet, setImageSet] = useState<string[][]>([]);
 
   const create = () => {
     fetch(`/organizations/${organization_id}/votes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(vote) }).then(res => {
@@ -51,7 +50,7 @@ export const CreateVote = () => {
         res.text().then(e => message.error(e)).catch(e => message.error(e));
         return;
       }
-      nav(`/organizations/${organization_id}/votes`);
+      nav(`/organizations/${organization_id}`);
     })
   }
 
@@ -103,7 +102,12 @@ export const CreateVote = () => {
                   <Descriptions.Item style={{ display: "flex" }} label="Type">{q.type_}</Descriptions.Item>
                 </Descriptions>
                 <List bordered={true}>
-                  {q.options.map(o => (<List.Item>{o.option}</List.Item>))}
+                  {q.options.map(o => (<List.Item>
+                    <div className="flex flex-wrap flex-row justify-start items-center w-full">
+                      <div className="flex mr-5">{o.option}</div>
+                      {o.images.map(img => (<Image className="max-w-[80px] flex" src={img} />))}
+                    </div>
+                  </List.Item>))}
                 </List>
               </Card>
             </Col>))}
@@ -120,7 +124,7 @@ export const CreateVote = () => {
       {steps[current].content}
       {current > 0 && <Button className="absolute left-[10%] bottom-[10%]" onClick={() => setCurrent(prev => prev - 1)}>Previous</Button>}
       {current < items.length - 1 && <Button className="absolute right-[10%] bottom-[10%]" onClick={() => setCurrent(prev => prev + 1)} type='primary'>Next</Button>}
-      {current === steps.length - 1 && <Button type='primary' onClick={create}>Publish</Button>}
+      {current === steps.length - 1 && <Button className="absolute right-[10%] bottom-[10%]" type='primary' onClick={create}>Publish</Button>}
   </Layout>
 }
 
@@ -198,6 +202,11 @@ export const VoteList = () => {
 export const Detail = () => {
   const nav = useNavigate();
   const { vote_id } = useParams();
+  const [questions, setQuestions] = useState<QuestionDetail[]>([]);
+  useEffect(() => {
+    fetch(`/votes/${vote_id}/questions`)
+    .then(res => res.json().then(r => setQuestions(r.list))).catch(reason => message.error(reason));
+  }, [])
 
 
   return <div>
@@ -205,7 +214,7 @@ export const Detail = () => {
     <CVoteDetail id={vote_id!} />
     {/* <DateRangeUpdate vote_id={vote_id!} /> */}
     <Button onClick={() => { nav(`/votes/${vote_id}/questions/create`) }}>Add Question</Button>
-    <CQuestionList vote_id={vote_id!} />
+    <CQuestionList questions={questions} setQuestions={setQuestions} />
   </div>
 }
 

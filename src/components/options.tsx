@@ -139,7 +139,7 @@ export const List = ({ options, setOptions }: ListProps) => {
 				title: 'Images',
 				render: (_, record) => {
 					return <Row>{ record.images.map(img => { 
-						return <Image src={img} /> 
+						return <Image className="max-w-[80px]" src={img} /> 
 					}) }</Row>
 				}
 			},

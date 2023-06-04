@@ -34,7 +34,8 @@ export type Detail = {
   id: number,
   description: string,
   type_: string,
-  opts: OptItem[],
+  version: number,
+  has_answered: boolean,
 }
 
 export type Update = {
