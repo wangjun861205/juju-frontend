@@ -11,7 +11,7 @@ import {
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { get, post, fetch_list } from "../utils/api";
-import { _Report, Report as QuestionReport, List as CQuestionList, ListForCreate as QuestionListForCreateComponent, Create as QuestionCreate } from "../components/questions";
+import { _Report, Report as QuestionReport, List as QuestionList, ListForCreate as QuestionListForCreateComponent, Create as QuestionCreate } from "../components/questions";
 import { Moment } from "moment";
 import { DatePicker } from "antd";
 import { Detail as CVoteDetail, Update as CVoteUpdate, Filling as FillingComponent } from "../components/vote";
@@ -203,18 +203,43 @@ export const Detail = () => {
   const nav = useNavigate();
   const { vote_id } = useParams();
   const [questions, setQuestions] = useState<QuestionDetail[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     fetch(`/votes/${vote_id}/questions`)
     .then(res => res.json().then(r => setQuestions(r.list))).catch(reason => message.error(reason));
   }, [])
 
+  const onOk = (q: Question) => {
+    fetch(`/votes/${vote_id}/questions`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(q)
+    }).then(res => res.json().then(r => {
+      fetch(`/questions/${r.id}`)
+      .then(res => {
+        if (res.status !== 200) {
+          message.error(res.statusText);
+          return;
+        }
+        res.json()
+        .then(r => setQuestions(prev => {
+            return [...prev, r]
+          }))
+        .catch(err => message.error(err))
+      })
+      .catch(err => message.error(err))
+    }))
+  }
+
 
   return <div>
-    <Button onClick={() => { nav(-1) }}>Back</Button>
-    <CVoteDetail id={vote_id!} />
-    {/* <DateRangeUpdate vote_id={vote_id!} /> */}
-    <Button onClick={() => { nav(`/votes/${vote_id}/questions/create`) }}>Add Question</Button>
-    <CQuestionList questions={questions} setQuestions={setQuestions} />
+    <Layout>
+      <Button onClick={() => { nav(-1) }}>Back</Button>
+      <CVoteDetail id={vote_id!} />
+      <Button type="primary" onClick={() => setIsOpen(true)}>Add Question</Button>
+      <QuestionCreate isOpen={isOpen} setIsOpen={setIsOpen} onOk={onOk}></QuestionCreate>
+      <QuestionList questions={questions} setQuestions={setQuestions} />
+    </Layout>
   </div>
 }
 

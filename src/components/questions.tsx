@@ -35,6 +35,19 @@ export const List = ({ questions, setQuestions }: ListProps) => {
   const [options, setOptions] = useState<Map<number, Option[]>>(new Map());
   const [loadings, setLoadings] = useState<Map<number, boolean>>(new Map());
 
+  const remove = (id: number) => {
+    fetch(`/questions/${id}`, { method: "DELETE" })
+    .then(resp => {
+      if (resp.status !== 200) {
+        message.error('Failed to delete question');
+        return;
+      }
+      message.success('Question deleted')
+      setQuestions(prev => prev.filter(q => q.id !== id))
+    })
+    .catch(err => message.error(err))
+  }
+
   const columns = [
     {
       title: "ID",
@@ -50,20 +63,20 @@ export const List = ({ questions, setQuestions }: ListProps) => {
       title: "Has Answered",
       dataIndex: "has_answered",
       key: "has_answered",
-      render: (result: boolean) => { return result.toString() }
+      // render: (result: boolean) => { return result.toString() }
     },
     {
       title: "Has Updated",
       dataIndex: "has_updated",
       key: "has_updated",
-      render: (result: boolean) => { return result.toString() }
+      // render: (result: boolean) => { return result.toString() }
     },
     {
       title: "Actions",
       render: (_: any, record: Item, i: number) => {
         return <div>
           <Button onClick={(event) => { event.stopPropagation(); nav(`/questions/${record.id}/update`); }}>Update</Button>
-          <Button onClick={(event) => { event.stopPropagation(); }}>Delete</Button>
+          <Button onClick={(event) => { event.stopPropagation(); remove(record.id)}} danger={true}>Delete</Button>
         </div>
       }
     }
@@ -71,19 +84,19 @@ export const List = ({ questions, setQuestions }: ListProps) => {
 
   const expandableConfig: ExpandableConfig<QuestionDetail> = {
     onExpand: (_, record) => {
-      setLoadings(prev => {
-        return new Map(prev.set(record.id, true))
-      })
       if (options.get(record.id) === undefined) {
+        setLoadings(prev => {
+          return new Map(prev.set(record.id, true))
+        })
         fetch(`/questions/${record.id}/options`)
         .then(resp => {
           if (resp.status !== 200) {
             message.error('Failed to fetch options');
             return;
           }
-          resp.json().then(opts => {
+          resp.json().then(r => {
             setOptions(prev => {
-              return new Map(prev.set(record.id, opts))
+              return new Map(prev.set(record.id, r.list))
             })
           })
         })
@@ -113,7 +126,7 @@ export const List = ({ questions, setQuestions }: ListProps) => {
     }
   }
 
-  return <Table columns={columns} dataSource={questions} onRow={(item: Item) => {
+  return <Table rowKey="id" columns={columns} dataSource={questions} onRow={(item: Item) => {
     return {
       onClick: () => {
         nav(`/questions/${item.id}`);
