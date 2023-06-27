@@ -6,22 +6,22 @@ import { List as OrganizationList, Create as CreateOrganization, Detail as Organ
 import { CreateVote, VoteList, Detail as VoteDetail, Update as VoteUpdate, Filling as VoteFilling } from './pages/votes';
 import { Detail as QuestionDetail, List as QuestionList } from "./pages/question";
 import { List as AnswerList } from "./pages/answer";
-// import { Update as DateUpdate, Report as DateReport } from "./pages/date";
 import { Report } from "./pages/votes";
 import { Find as FindUser, List as UserList } from "./pages/user";
 import { PaginationWrapper } from './wrapper/pagination';
 import Profile from "./pages/profile";
+import {QueryClientProvider, QueryClient} from 'react-query';
 
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 function App() {
-
+  const queryClient = new QueryClient();
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/organizations" replace />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<QueryClientProvider client={queryClient}><Profile /></QueryClientProvider>} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/organizations">

@@ -108,11 +108,11 @@ export const List = ({ organization_id }: { organization_id: string }) => {
 			dataIndex: "",
 			key: "",
 			render: (_: string, { id }: { id: number }, i: number) => {
-				return <div>
-					<Button onClick={(event) => { event.stopPropagation(); nav(`/votes/${id}/update/`) }}>Update</Button>
-					<Button onClick={(event) => { event.stopPropagation(); remove(id, i) }}>Delete</Button>
-					<Button onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/report`) }}>View Report</Button>
-					<Button onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/filling`) }}>Filling</Button>
+				return <div className='max-w-[220px]'>
+					<Button className='w-[110px]' onClick={(event) => { event.stopPropagation(); nav(`/votes/${id}/update/`) }}>Update</Button>
+					<Button className='w-[110px]' onClick={(event) => { event.stopPropagation(); remove(id, i) }}>Delete</Button>
+					<Button className='w-[110px]' onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/report`) }}>View Report</Button>
+					<Button className='w-[110px]' onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/filling`) }}>Filling</Button>
 				</div >
 			}
 		}

@@ -1,6 +1,6 @@
 export interface Profile {
     nickname: string,
-    avatar: string,
+    avatar: string | null,
 }
 
 
