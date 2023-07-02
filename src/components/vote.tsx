@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, Dispatch, SetStateAction } from "react";
-import { Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent, Form, Steps, Descriptions } from "antd";
+import { Tooltip, Input, Button, Table, DatePicker, message, Row, Radio, Checkbox, RadioChangeEvent, Form, Steps, Descriptions } from "antd";
 import { get, ListResponse, delete_, DeleteResponse, Pagination, put, UpdateResponse } from "../utils/api";
 import { useNavigate } from "react-router";
 import moment, { Moment } from "moment-timezone";
@@ -7,7 +7,10 @@ import { CheckboxChangeEvent } from "antd/lib/checkbox";
 import { question_ids_within_vote } from "../apis/question";
 import { Filling as FillingComponent } from "./questions";
 import { Create as VoteCreateModel } from "../models/vote";
+import { Question } from "../models/question";
 import dayjs, { Dayjs } from "dayjs";
+import { DeleteOutlined, EditOutlined, LineChartOutlined, HighlightOutlined } from "@ant-design/icons"
+import { Filling as QuestionFilling } from "./questions"
 
 enum Status {
 	Closed,
@@ -98,6 +101,11 @@ export const List = ({ organization_id }: { organization_id: string }) => {
 			key: "deadline",
 		},
 		{
+			title: "Number of Questions",
+			dataIndex: "num_of_questions",
+			key: "num_of_questions",
+		},
+		{
 			title: "Has Updated",
 			dataIndex: "has_updated",
 			key: "has_updated",
@@ -106,17 +114,24 @@ export const List = ({ organization_id }: { organization_id: string }) => {
 		{
 			title: "Actions",
 			dataIndex: "",
-			key: "",
+			key: "action",
 			render: (_: string, { id }: { id: number }, i: number) => {
 				return <div className='max-w-[220px]'>
-					<Button className='w-[110px]' onClick={(event) => { event.stopPropagation(); nav(`/votes/${id}/update/`) }}>Update</Button>
-					<Button className='w-[110px]' onClick={(event) => { event.stopPropagation(); remove(id, i) }}>Delete</Button>
-					<Button className='w-[110px]' onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/report`) }}>View Report</Button>
-					<Button className='w-[110px]' onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/filling`) }}>Filling</Button>
+					<Tooltip title='Edit'>
+						<Button className='w-[50px] m-[4px]' icon={<EditOutlined rev={false} />} onClick={(event) => { event.stopPropagation(); nav(`/votes/${id}/update/`) }} />
+					</Tooltip>
+					<Tooltip title='Delete'>
+						<Button className='w-[50px] m-[4px]' icon={<DeleteOutlined rev={false} />} onClick={(event) => { event.stopPropagation(); remove(id, i) }} />
+					</Tooltip>
+					<Tooltip title='Statistic Report'>
+						<Button className='w-[50px] m-[4px]' icon={<LineChartOutlined rev={false} />} onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/report`) }} />
+					</Tooltip>
+					<Tooltip title='Filling'>
+						<Button className='w-[50px] m-[4px]' icon={<HighlightOutlined rev={false} />} onClick={(evnet) => { evnet.stopPropagation(); nav(`/votes/${id}/filling`) }} />
+					</Tooltip>
 				</div >
 			}
 		}
-
 	]
 
 	const onRow = (record: { id: number }) => {
@@ -175,64 +190,48 @@ type QuestionWithOptions = {
 }
 
 export const Filling = ({ id }: { id: number }) => {
-	const [question_ids, set_question_ids] = useState<number[]>();
-	const [idx, set_idx] = useState<number>();
+	const [questions, setQuestions] = useState<Question[]>([]);
 	const nav = useNavigate();
 	useEffect(() => {
-		question_ids_within_vote(id)
-		.then(ids => { 
-			if (!ids) {
-				message.error('empty vote');
-				nav(-1);
-				return;
+		fetch(`/votes/${id}/questions`)
+		.then(res => {
+			if (res.status !== 200) {
+				res.text()
+				.then(t => message.error(t))
+				.catch(reason => message.error(reason));
+				return
 			}
-			set_question_ids(ids);
+			res.json()
+			.then(qs => setQuestions(qs.list))
+			.catch(reason => message.error(reason));
 		})
-		.catch(e => {
-			message.error(e);
-			nav(-1);
-		})
-	}, [id])
-
-	useEffect(() => {
-		set_idx(0);
-	}, [question_ids]);
-
-
-	const prev = () => {
-		set_idx((old) => {
-			if (old === null) {
-				return old;
-			}
-			if (old! > 0) {
-				return old! - 1;
-			}
-			return old;
-		});
-	}
-
-	const next = () => {
-		set_idx((old) => {
-			if (old === undefined) {
-				return old;
-			}
-			return old + 1;
-		});
-	}
-
-
+	}, [])
 
 	return <>
-	{ question_ids && idx !== undefined
-	  ? <div>
-			<FillingComponent question_id={question_ids[idx]} />
-			<Row>
-				{ idx > 0 ? <Button onClick={prev}>Previous</Button> : <></> }
-				{ idx < question_ids.length - 1? <Button onClick={next}>Next</Button> : <></> }
-			</Row>
+		{ questions?.map((q, i) => {
+			return <QuestionFilling key={q.id} question={q} setAnswer={(answer: number[]) => setQuestions(prev => {const res = [...prev]; res[i].answer = answer; return res;})}/>
+		})}
+		<div className='flex justify-center m-10'>
+		<Button type='primary' onClick={() => {
+			fetch(`/votes/${id}/answers`, {method: "POST",headers: { "Content-Type": "application/json" }, body: JSON.stringify(questions.map(q => {
+				return {
+					question_id: q.id,
+					option_ids: q.answer,
+				}	
+			}))})
+			.then(res => {
+				if (res.status !== 200) {
+					res.text()
+					.then(t => message.error(t))
+					.catch(reason => console.error(reason));
+					return;
+				}
+				message.success("Successfully Submitted");
+				nav(-1);
+			})
+			
+		}} >Submit</Button>
 		</div>
-	  : <></>
-	}
 	</>
 }
 

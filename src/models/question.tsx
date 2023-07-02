@@ -15,7 +15,9 @@ export type Question = {
   description: string,
   type_: QuestionType,
   version: number,
+  has_answered: boolean,
   options: Option[],
+  answer: number[],
 }
 
 export type ListItem = {

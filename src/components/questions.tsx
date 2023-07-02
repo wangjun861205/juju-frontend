@@ -26,14 +26,12 @@ type Item = {
 }
 
 interface ListProps {
-  questions: QuestionDetail[],
-  setQuestions: Dispatch<SetStateAction<QuestionDetail[]>>,
+  questions: Question[],
+  setQuestions: Dispatch<SetStateAction<Question[]>>,
 }
 
 export const List = ({ questions, setQuestions }: ListProps) => {
   const nav = useNavigate();
-  const [options, setOptions] = useState<Map<number, Option[]>>(new Map());
-  const [loadings, setLoadings] = useState<Map<number, boolean>>(new Map());
 
   const remove = (id: number) => {
     fetch(`/questions/${id}`, { method: "DELETE" })
@@ -63,13 +61,11 @@ export const List = ({ questions, setQuestions }: ListProps) => {
       title: "Has Answered",
       dataIndex: "has_answered",
       key: "has_answered",
-      // render: (result: boolean) => { return result.toString() }
     },
     {
       title: "Has Updated",
       dataIndex: "has_updated",
       key: "has_updated",
-      // render: (result: boolean) => { return result.toString() }
     },
     {
       title: "Actions",
@@ -82,37 +78,9 @@ export const List = ({ questions, setQuestions }: ListProps) => {
     }
   ]
 
-  const expandableConfig: ExpandableConfig<QuestionDetail> = {
-    onExpand: (_, record) => {
-      if (options.get(record.id) === undefined) {
-        setLoadings(prev => {
-          return new Map(prev.set(record.id, true))
-        })
-        fetch(`/questions/${record.id}/options`)
-        .then(resp => {
-          if (resp.status !== 200) {
-            message.error('Failed to fetch options');
-            return;
-          }
-          resp.json().then(r => {
-            setOptions(prev => {
-              return new Map(prev.set(record.id, r.list))
-            })
-          })
-        })
-        .catch(err => message.error(err))
-        .finally(() => {
-          setLoadings(prev => {
-            return new Map(prev.set(record.id, false))
-          })
-        })
-      }
-      
-    },
+  const expandableConfig: ExpandableConfig<Question> = {
     expandedRowRender: (record) => {
-      return <Spin spinning={loadings.get(record.id) ?? false}>
-      {
-        options.get(record.id)?.map(o => {
+      return record.options.map(o => {
           return <Descriptions key={o.id} title="Options" column={3}>
             <Descriptions.Item label="ID">{o.id}</Descriptions.Item>
             <Descriptions.Item label="Option">{o.option}</Descriptions.Item>
@@ -121,12 +89,10 @@ export const List = ({ questions, setQuestions }: ListProps) => {
             })}</Descriptions.Item>
           </Descriptions>
         })
-      }
-      </Spin>
     }
   }
 
-  return <Table rowKey="id" columns={columns} dataSource={questions} onRow={(item: Item) => {
+  return <Table rowKey="id" columns={columns} dataSource={questions} onRow={(item: Question) => {
     return {
       onClick: () => {
         nav(`/questions/${item.id}`);
@@ -134,6 +100,7 @@ export const List = ({ questions, setQuestions }: ListProps) => {
     }
   }} expandable={expandableConfig}/>
 }
+
 
 export const Detail = ({ question_id }: { question_id: number }) => {
   const [state, setState] = useState<QuestionDetail>();
@@ -168,86 +135,41 @@ export const Report = ({ report }: { report: _Report }) => {
   </div>
 }
 
-export type FillingProps = {
-  question_id: number,
+
+
+interface FillingProps {
+  question: Question,
+  setAnswer: (answer: number[]) => void,
 }
 
 
+export const Filling = ({ question, setAnswer }: FillingProps) => {
 
-
-
-export const Filling = ({ question_id }: FillingProps) => {
-
-  type _Question = Question & { options: Option[] } & { answer: number[] };
-
-  const [question, setQuestion] = useState<_Question>();
-
-  const nav = useNavigate();
-
-  const init_question = async () => {
-    const q = await fetch_question(question_id);
-    const opts = await options_within_question(question_id);
-    const ans = await answers_of_question(question_id);
-    setQuestion({
-      options: opts,
-      answer: ans,
-      ...q,
-    });
-  }
-
-  useEffect(() => {
-    init_question().then().catch(e => {
-      message.error(e);
-      nav(-1)
-    });
-  }, [question_id, nav])
-
-  const radioOnChange = (e: RadioChangeEvent) => {
-    setQuestion(q => {
-      if (!q) throw new Error("question still be uninitiated");
-      if (q.answer.length === 0) {
-        q.answer.push(e.target.value);
-        return { ...q };
-      }
-      q.answer[0] = e.target.value;
-      return { ...q };
-    })
-  }
-
-  const checkboxOnChange = (e: CheckboxChangeEvent) => {
-    setQuestion(q => {
-      if (!q) throw new Error("question still be uninitiated");
-      const answer = [...q.answer];
-      if (e.target.checked) {
-        answer.push(e.target.value);
-        return { ...q, answer };
-      }
-      answer.splice(q.answer.indexOf(e.target.value), 1);
-      return { ...q, answer };
-    });
-  }
-  return <>{question ?
-    <div>
-      <Row>ID: {question.id}</Row>
-      <Row>Description: {question.description}</Row>
-      <Row>Type: {question.type_}</Row>
-      <Row>Version: {question.version}</Row>
-      <Row>Options:</Row>
+  return <>
+      <Descriptions>
+        <Descriptions.Item label="ID">{question.id}</Descriptions.Item>
+        <Descriptions.Item label="Description">{question.description}</Descriptions.Item>
+        <Descriptions.Item label="Version">{question.version}</Descriptions.Item>       
+      </Descriptions>
       {question.type_ === QuestionType.SINGLE
-        ? <Radio.Group value={question.answer?.[0]}>
+        ? <Radio.Group value={question.answer ? question.answer[0] : null}>
           {question?.options.map(o => {
-            return <Row><Radio value={o.id} onChange={radioOnChange}>{o.option}</Radio></Row>
+            return <Row className='flex-row justify-start items-center'>
+              <Radio value={o.id} onChange={e => setAnswer([e.target.value])}>{o.option}</Radio>
+              { o.images.map(img => <Image className='max-w-[100px]' key={img} src={img} />)}
+              </Row>
           })
           }
         </Radio.Group>
         : <Checkbox.Group value={question.answer}>
-          {question?.options.map(o => {
-            return <Checkbox value={o.id} onChange={checkboxOnChange}>{o.option}</Checkbox>
-          })}
+          {question?.options.map(o => 
+            <Row className='flex-row justify-start items-center'>
+              <Checkbox value={o.id} onChange={e => {e.target.checked ? setAnswer([e.target.value, ...question.answer]) : setAnswer(question.answer.filter(a => a !== e.target.value))}}>{o.option}</Checkbox>)
+              { o.images.map(img => <Image className='max-w-[100px]' key={img} src={img} />)}
+            </Row>
+          )}
         </Checkbox.Group>}
-      <Button onClick={() => submit_answer(question_id, question.answer).then(_ => message.success('submit answer successfully')).catch(e => message.error(e))}>提交</Button>
-    </div>
-    : <></>}</>
+    </>
 }
 
 
@@ -421,7 +343,7 @@ interface CreateProps {
 }
 
 export const Create = ({ isOpen, setIsOpen, onOk }: CreateProps) => {
-  const [question, setQuestion] = useState<Question>({ id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0 })
+  const [question, setQuestion] = useState<Question>({ id: 0, description: "", type_: QuestionType.SINGLE, options: [], version: 0, has_answered: false, answer: [] })
   const [optionOpens, setOptionOpens] = useState<boolean[]>(new Array(question.options.length).fill(false));
   const [createOptionOpen, setCreateOptionOpen] = useState(false);
 

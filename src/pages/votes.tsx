@@ -172,6 +172,12 @@ export const VoteList = () => {
       key: "has_updated",
     },
     {
+      title: "Number of Questions",
+      dataIndex: "number_of_questions",
+      key: "num_of_questions",
+    
+    },
+    {
       title: "Actions",
       dataIndex: "",
       key: "",
@@ -202,7 +208,7 @@ export const VoteList = () => {
 export const Detail = () => {
   const nav = useNavigate();
   const { vote_id } = useParams();
-  const [questions, setQuestions] = useState<QuestionDetail[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     fetch(`/votes/${vote_id}/questions`)
@@ -314,9 +320,9 @@ export const Filling = () => {
 
 
 
-  return <>{questionIDs.length > 0 && currIdx !== null && answers && vote_id
+  return <Layout>{questionIDs.length > 0 && currIdx !== null && answers && vote_id
     ? <div>
       <FillingComponent id={parseInt(vote_id)} />
     </div>
-    : <div></div>}</>
+    : <div></div>}</Layout>
 }

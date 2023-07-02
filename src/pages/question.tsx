@@ -66,7 +66,7 @@ export const Detail = () => {
 export const List = () => {
   const { vote_id } = useParams();
   const nav = useNavigate();
-  const [questions, setQuestions] = useState<QuestionDetail[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   useEffect(() => {
     fetch(`/votes/${vote_id}/questions`).then(res => {
       if (res.status !== 200) {
